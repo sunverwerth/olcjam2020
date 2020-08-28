@@ -22,41 +22,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "log.h"
-#include "sys.h"
-#include "Gfx.h"
 #include "Timer.h"
-#include "Game.h"
-
-#define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
 
-#ifdef _WIN32
-#include <Windows.h>
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd) {
-#else
-int main(int argc, char** argv) {
-#endif
-	log_init();
-	sys_init();
+Timer::Timer() : startTick(SDL_GetTicks()), lapTick(startTick) {}
 
-	Gfx gfx("OLC CodeJam 2020", 1280, 800, false);
-	Timer timer;
-	Game game(gfx, timer);
-
-	SDL_Event event;
-	bool run = true;
-	while (game.shouldKeepRunning()) {
-		while (SDL_PollEvent(&event)) {
-			game.handleEvent(event);
-		}
-		timer.lap();
-		gfx.beginFrame();
-		game.prepareFrame();
-		gfx.renderFrame();
-	}
-
-	sys_shutdown();
-	log_shutdown();
-	return 0;
+void Timer::lap() {
+	unsigned int tick = SDL_GetTicks();
+	dt = (tick - lapTick) / 1000.0f;
+	time = (tick - startTick) / 1000.0;
+	lapTick = tick;
 }

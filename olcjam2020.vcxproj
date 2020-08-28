@@ -151,19 +151,24 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Game.cpp" />
     <ClCompile Include="src\Gfx.cpp" />
     <ClCompile Include="src\glad.cpp" />
     <ClCompile Include="src\Log.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\sys.cpp" />
+    <ClCompile Include="src\Timer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Game.h" />
     <ClInclude Include="src\Gfx.h" />
     <ClInclude Include="src\glad.h" />
     <ClInclude Include="src\khrplatform.h" />
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\stb_image.h" />
     <ClInclude Include="src\sys.h" />
+    <ClInclude Include="src\Timer.h" />
+    <ClInclude Include="src\Vec4.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
