@@ -154,6 +154,7 @@
     <ClCompile Include="src\Game.cpp" />
     <ClCompile Include="src\Gfx.cpp" />
     <ClCompile Include="src\glad.cpp" />
+    <ClCompile Include="src\Image.cpp" />
     <ClCompile Include="src\Log.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\sys.cpp" />
@@ -163,6 +164,7 @@
     <ClInclude Include="src\Game.h" />
     <ClInclude Include="src\Gfx.h" />
     <ClInclude Include="src\glad.h" />
+    <ClInclude Include="src\Image.h" />
     <ClInclude Include="src\khrplatform.h" />
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\stb_image.h" />

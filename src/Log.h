@@ -26,5 +26,5 @@ SOFTWARE.
 
 int log_init();
 void log_shutdown();
-void log(const char* msg);
-void log_error(const char* msg);
+void log(const char* fmt, ...);
+void log_error(const char* fmt, ...);

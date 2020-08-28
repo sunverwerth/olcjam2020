@@ -24,6 +24,7 @@ SOFTWARE.
 
 #include "sys.h"
 #include <fstream>
+#include <cstdarg>
 
 static std::ofstream logfile;
 
@@ -42,10 +43,20 @@ void log_shutdown() {
 	logfile.close();
 }
 
-void log(const char* msg) {
-	logfile << msg << std::endl;
+void log(const char* fmt, ...) {
+	va_list vl;
+	va_start(vl, fmt);
+	static char buf[512];
+	vsprintf_s(buf, fmt, vl);
+	logfile << buf << std::endl;
+	va_end(vl);
 }
 
-void log_error(const char* msg) {
-	logfile << "ERROR: " << msg << std::endl;
+void log_error(const char* fmt, ...) {
+	va_list vl;
+	va_start(vl, fmt);
+	static char buf[512];
+	vsprintf_s(buf, fmt, vl);
+	logfile << "ERROR: " << buf << std::endl;
+	va_end(vl);
 }
