@@ -22,16 +22,26 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "log.h"
 #include "sys.h"
 #include <cstdlib>
 #include <SDL2/SDL.h>
 #ifdef _WIN32
 #include <Windows.h>
 #endif
+#include <fstream>
+
+static std::ofstream logfile;
 
 int sys_init() {
+	logfile.open("codejam.log");
+	if (!logfile.good()) {
+		sys_crash("Could not open log file.");
+		return 1;
+	}
+
+	log("Hello, world!");
 	log("sys_init");
+
 	if (SDL_Init(SDL_INIT_EVERYTHING)) {
 		sys_crash("Could not initialize SDL2.");
 		return 1;
@@ -40,6 +50,7 @@ int sys_init() {
 }
 
 void sys_shutdown() {
+	log("Goodbye, world!");
 	SDL_Quit();
 }
 
@@ -49,4 +60,36 @@ void sys_crash(const char* reason) {
 #endif
 	log_error(reason);
 	exit(1);
+}
+
+void log(const char* fmt, ...) {
+	va_list vl;
+	va_start(vl, fmt);
+	static char buf[512];
+	vsprintf_s(buf, fmt, vl);
+	logfile << buf << std::endl;
+	va_end(vl);
+}
+
+void log_error(const char* fmt, ...) {
+	va_list vl;
+	va_start(vl, fmt);
+	static char buf[512];
+	vsprintf_s(buf, fmt, vl);
+	logfile << "ERROR: " << buf << std::endl;
+	va_end(vl);
+}
+
+std::string sys_read_file(const char* filename) {
+	std::ifstream file(filename, std::ios::binary);
+	if (!file.good()) {
+		log_error("Could not open file %s.", filename);
+		return "";
+	}
+	file.seekg(0, std::ios::end);
+	size_t size = file.tellg();
+	file.seekg(0);
+	std::string content(size, ' ');
+	file.read(&content[0], size);
+	return content;
 }

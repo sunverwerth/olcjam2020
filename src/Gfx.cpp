@@ -24,7 +24,7 @@ SOFTWARE.
 
 #include "Gfx.h"
 #include "sys.h"
-#include "Log.h"
+#include "Shader.h"
 #include "glad.h"
 
 void APIENTRY debugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {
@@ -61,6 +61,8 @@ Gfx::Gfx(const char* title, int width, int height, bool fullscreen) : width(widt
 		glDebugMessageCallback(debugCallback, nullptr);
 	}
 #endif
+
+	Shader program("media/shaders/sprite_vs.glsl", "media/shaders/sprite_fs.glsl");
 }
 
 Gfx::~Gfx() {

@@ -22,7 +22,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "log.h"
 #include "sys.h"
 #include "Gfx.h"
 #include "Timer.h"
@@ -37,7 +36,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #else
 int main(int argc, char** argv) {
 #endif
-	log_init();
 	sys_init();
 
 	Gfx gfx("OLC CodeJam 2020", 1280, 800, false);
@@ -57,6 +55,5 @@ int main(int argc, char** argv) {
 	}
 
 	sys_shutdown();
-	log_shutdown();
 	return 0;
 }

@@ -65,12 +65,12 @@ struct Vec4 {
         return Vec4(x / rhs, y / rhs, z / rhs, w / rhs);
     }
 
-    double length() const {
+    float length() const {
         return std::sqrt(squaredLength());
     }
 
-    double squaredLength() const {
-        return x * x + y * y * z * z + w * w;
+    float squaredLength() const {
+        return x * x + y * y + z * z + w * w;
     }
 
     Vec4 normalized() const {

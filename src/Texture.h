@@ -24,7 +24,7 @@ SOFTWARE.
 
 #pragma once
 
-int log_init();
-void log_shutdown();
-void log(const char* fmt, ...);
-void log_error(const char* fmt, ...);
+class Texture {
+public:
+	int boundUnit() const { return -1; /*TODO*/ }
+};

@@ -23,7 +23,7 @@ SOFTWARE.
 */
 
 #include "Image.h"
-#include "Log.h"
+#include "sys.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #include <algorithm>

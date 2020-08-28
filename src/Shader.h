@@ -22,41 +22,26 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "sys.h"
-#include <fstream>
-#include <cstdarg>
+#pragma once
 
-static std::ofstream logfile;
+class Texture;
+struct Vec2;
+struct Vec3;
+struct Vec4;
 
-int log_init() {
-	logfile.open("codejam.log");
-	if (logfile.good()) {
-		logfile << "Hello, world!" << std::endl;
-		return 0;
-	}
-	sys_crash("Could not open log file.");
-	return 1;
-}
+class Shader{
+public:
+	Shader(const char* vsfile, const char* fsfile);
+	~Shader();
 
-void log_shutdown() {
-	logfile << "Goodbye, world!" << std::endl;
-	logfile.close();
-}
+	void use() const;
 
-void log(const char* fmt, ...) {
-	va_list vl;
-	va_start(vl, fmt);
-	static char buf[512];
-	vsprintf_s(buf, fmt, vl);
-	logfile << buf << std::endl;
-	va_end(vl);
-}
+	void uniform(const char*, float);
+	void uniform(const char*, const Vec2&);
+	void uniform(const char*, const Vec3&);
+	void uniform(const char*, const Vec4&);
+	void texture(const char*, const Texture&);
 
-void log_error(const char* fmt, ...) {
-	va_list vl;
-	va_start(vl, fmt);
-	static char buf[512];
-	vsprintf_s(buf, fmt, vl);
-	logfile << "ERROR: " << buf << std::endl;
-	va_end(vl);
-}
+private:
+	unsigned int program{ 0 };
+};

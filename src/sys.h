@@ -24,6 +24,11 @@ SOFTWARE.
 
 #pragma once
 
+#include <string>
+
 int sys_init();
 void sys_shutdown();
 void sys_crash(const char* reason);
+void log(const char* fmt, ...);
+void log_error(const char* fmt, ...);
+std::string sys_read_file(const char* filename);
