@@ -151,7 +151,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Gfx.cpp" />
+    <ClCompile Include="src\glad.cpp" />
+    <ClCompile Include="src\Log.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\sys.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Gfx.h" />
+    <ClInclude Include="src\glad.h" />
+    <ClInclude Include="src\khrplatform.h" />
+    <ClInclude Include="src\Log.h" />
+    <ClInclude Include="src\stb_image.h" />
+    <ClInclude Include="src\sys.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
