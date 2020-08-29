@@ -22,21 +22,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "Timer.h"
-#include <SDL2/SDL.h>
+#pragma once
 
-Timer::Timer() : startTick(SDL_GetTicks()), lapTick(startTick), fpsTick(startTick) {}
+#include "Vec2.h"
+#include "Vec4.h"
 
-void Timer::lap() {
-	frameCount++;
-	unsigned int tick = SDL_GetTicks();
-	dt = (tick - lapTick) / 1000.0f;
-	time = (tick - startTick) / 1000.0;
+class Texture;
 
-	if (tick - fpsTick >= 1000) {
-		fps_ = frameCount;
-		fpsTick = tick;
-		frameCount = 0;
-	}
-	lapTick = tick;
-}
+struct Sprite {
+	Texture* texture;
+	Vec2 clipPosition;
+	Vec2 clipSize;
+	bool sliced;
+	Vec4 borders;
+};

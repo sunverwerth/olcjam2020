@@ -164,15 +164,11 @@ struct Vec3 {
 	const static Vec3 BACK;
 };
 
-const Vec3 Vec3::ONE(1, 1, 1);
-const Vec3 Vec3::ZERO(0, 0, 0);
-const Vec3 Vec3::UP(0, 1, 0);
-const Vec3 Vec3::DOWN(0, -1, 0);
-const Vec3 Vec3::LEFT(-1, 0, 0);
-const Vec3 Vec3::RIGHT(1, 0, 0);
-const Vec3 Vec3::FORWARD(0, 0, 1);
-const Vec3 Vec3::BACK(0, 0, -1);
-
-float dot(const Vec3& l, const Vec3& r) {
-	return l.x * r.x + l.y * r.y + l.z * r.z;
-}
+inline const Vec3 Vec3::ONE(1, 1, 1);
+inline const Vec3 Vec3::ZERO(0, 0, 0);
+inline const Vec3 Vec3::UP(0, 1, 0);
+inline const Vec3 Vec3::DOWN(0, -1, 0);
+inline const Vec3 Vec3::LEFT(-1, 0, 0);
+inline const Vec3 Vec3::RIGHT(1, 0, 0);
+inline const Vec3 Vec3::FORWARD(0, 0, 1);
+inline const Vec3 Vec3::BACK(0, 0, -1);

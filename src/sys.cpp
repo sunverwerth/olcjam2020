@@ -69,6 +69,7 @@ void log(const char* fmt, ...) {
 	vsprintf_s(buf, fmt, vl);
 	logfile << buf << std::endl;
 	va_end(vl);
+	logfile.flush();
 }
 
 void log_error(const char* fmt, ...) {
@@ -78,6 +79,7 @@ void log_error(const char* fmt, ...) {
 	vsprintf_s(buf, fmt, vl);
 	logfile << "ERROR: " << buf << std::endl;
 	va_end(vl);
+	logfile.flush();
 }
 
 std::string sys_read_file(const char* filename) {

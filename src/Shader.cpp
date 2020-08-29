@@ -59,19 +59,19 @@ Shader::Shader(const char* vsfile, const char* fsfile) {
 		return;
 	}
 	auto fs = glCreateShader(GL_FRAGMENT_SHADER);
-	auto fscodeptr = vscode.c_str();
-	int fscodeLength = vscode.size();
-	glShaderSource(vs, 1, &vscodeptr, &fscodeLength);
-	glCompileShader(vs);
+	auto fscodeptr = fscode.c_str();
+	int fscodeLength = fscode.size();
+	glShaderSource(fs, 1, &fscodeptr, &fscodeLength);
+	glCompileShader(fs);
 	int fsstatus;
-	glGetShaderiv(vs, GL_COMPILE_STATUS, &fsstatus);
+	glGetShaderiv(fs, GL_COMPILE_STATUS, &fsstatus);
 	if (fsstatus == GL_FALSE) {
 		log_error("Could not compile fragment shader %s", fsfile);
 		char infoLog[1024];
 		int infoLength;
-		glGetShaderInfoLog(vs, 1024, &infoLength, infoLog);
+		glGetShaderInfoLog(fs, 1024, &infoLength, infoLog);
 		log_error("%s", infoLog);
-		glDeleteShader(vs);
+		glDeleteShader(fs);
 		return;
 	}
 
@@ -107,30 +107,30 @@ void Shader::use() const {
 
 void Shader::uniform(const char* name, float v) {
 	auto location = glGetUniformLocation(program, name);
-	if (!location) return;
+	if (location < 0) return;
 	glUniform1f(location, v);
 }
 
 void Shader::uniform(const char* name, const Vec2& v) {
 	auto location = glGetUniformLocation(program, name);
-	if (!location) return;
+	if (location < 0) return;
 	glUniform2fv(location, 1, &v.x);
 }
 
 void Shader::uniform(const char* name, const Vec3& v) {
 	auto location = glGetUniformLocation(program, name);
-	if (!location) return;
+	if (location < 0) return;
 	glUniform3fv(location, 1, &v.x);
 }
 
 void Shader::uniform(const char* name, const Vec4& v) {
 	auto location = glGetUniformLocation(program, name);
-	if (!location) return;
+	if (location < 0) return;
 	glUniform4fv(location, 1, &v.x);
 }
 
 void Shader::texture(const char* name, const Texture& t) {
 	auto location = glGetUniformLocation(program, name);
-	if (!location) return;
-	glUniform1i(location, t.boundUnit());
+	if (location < 0) return;
+	glUniform1i(location, t.unit());
 }

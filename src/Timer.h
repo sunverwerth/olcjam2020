@@ -31,10 +31,14 @@ public:
 
 	float deltaTime() const { return dt; }
 	double elapsedTime() const { return time; }
+	int fps() const { return fps_; }
 
 private:
 	unsigned int startTick;
 	unsigned int lapTick;
+	unsigned int fpsTick;
 	float dt{ 0 };
 	double time{ 0 };
+	int fps_{ 0 };
+	int frameCount{ 0 };
 };

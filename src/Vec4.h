@@ -142,4 +142,27 @@ struct Vec4 {
     float y;
     float z;
     float w;
+
+    const static Vec4 ONE;
+    const static Vec4 ZERO;
+    const static Vec4 BLACK;
+    const static Vec4 WHITE;
+    const static Vec4 RED;
+    const static Vec4 GREEN;
+    const static Vec4 BLUE;
+    const static Vec4 YELLOW;
+    const static Vec4 CYAN;
+    const static Vec4 MAGENTA;
+
 };
+
+inline const Vec4 Vec4::ONE{ 1,1,1,1 };
+inline const Vec4 Vec4::ZERO{ 0,0,0,0 };
+inline const Vec4 Vec4::BLACK{ 0,0,0,1 };
+inline const Vec4 Vec4::WHITE{ 1,1,1,1 };
+inline const Vec4 Vec4::RED{ 1,0,0,1 };
+inline const Vec4 Vec4::GREEN{ 0,1,0,1 };
+inline const Vec4 Vec4::BLUE{ 0,0,1,1 };
+inline const Vec4 Vec4::YELLOW{ 1,1,0,1 };
+inline const Vec4 Vec4::CYAN{ 0,1,1,1 };
+inline const Vec4 Vec4::MAGENTA{ 1,0,1,1 };

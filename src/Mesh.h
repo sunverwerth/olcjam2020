@@ -22,21 +22,21 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "Timer.h"
-#include <SDL2/SDL.h>
+#pragma once
 
-Timer::Timer() : startTick(SDL_GetTicks()), lapTick(startTick), fpsTick(startTick) {}
+class Mesh {
+public:
+	Mesh();
+	~Mesh();
 
-void Timer::lap() {
-	frameCount++;
-	unsigned int tick = SDL_GetTicks();
-	dt = (tick - lapTick) / 1000.0f;
-	time = (tick - startTick) / 1000.0;
+	void bind() const;
+	void setVertices(const void* data, size_t elementSize, int num);
+	int numVertices() const { return numVertices_; }
 
-	if (tick - fpsTick >= 1000) {
-		fps_ = frameCount;
-		fpsTick = tick;
-		frameCount = 0;
-	}
-	lapTick = tick;
-}
+private:
+	unsigned int vao{ 0 };
+	unsigned int vbo{ 0 };
+	unsigned int ebo{ 0 };
+	int numVertices_{ 0 };
+};
+

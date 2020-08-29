@@ -42,6 +42,8 @@ int main(int argc, char** argv) {
 	Timer timer;
 	Game game(gfx, timer);
 	
+	game.start();
+
 	SDL_Event event;
 	bool run = true;
 	while (game.shouldKeepRunning()) {
@@ -51,7 +53,7 @@ int main(int argc, char** argv) {
 		timer.lap();
 		gfx.beginFrame();
 		game.prepareFrame();
-		gfx.renderFrame();
+		gfx.endFrame();
 	}
 
 	sys_shutdown();

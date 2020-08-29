@@ -24,7 +24,22 @@ SOFTWARE.
 
 #pragma once
 
+class Image;
+
 class Texture {
 public:
-	int boundUnit() const { return -1; /*TODO*/ }
+	Texture(const Image&);
+	~Texture();
+
+	void bind(int index);
+	void unbind();
+	int unit() const { return unit_; }
+	unsigned int width() const { return width_; }
+	unsigned int height() const { return height_; }
+
+private:
+	unsigned int width_{ 0 };
+	unsigned int height_{ 0 };
+	unsigned int texture{ 0 };
+	int unit_{ -1 };
 };

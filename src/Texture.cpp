@@ -22,21 +22,29 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "Timer.h"
-#include <SDL2/SDL.h>
+#include "Texture.h"
+#include "glad.h"
+#include "Image.h"
 
-Timer::Timer() : startTick(SDL_GetTicks()), lapTick(startTick), fpsTick(startTick) {}
+Texture::Texture(const Image& image): width_(image.width()), height_(image.height()) {
+	glCreateTextures(GL_TEXTURE_2D, 1, &texture);
+	glTextureStorage2D(texture, 1, GL_RGBA8, width_, height_);
+	glTextureSubImage2D(texture, 0, 0, 0, width_, height_, image.format() == Image::Format::RGB8 ? GL_RGB : GL_RGBA, GL_UNSIGNED_BYTE, image.data());
+	glTextureParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTextureParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+}
 
-void Timer::lap() {
-	frameCount++;
-	unsigned int tick = SDL_GetTicks();
-	dt = (tick - lapTick) / 1000.0f;
-	time = (tick - startTick) / 1000.0;
+Texture::~Texture() {
+	glDeleteTextures(1, &texture);
+}
 
-	if (tick - fpsTick >= 1000) {
-		fps_ = frameCount;
-		fpsTick = tick;
-		frameCount = 0;
-	}
-	lapTick = tick;
+void Texture::bind(int unit) {
+	if (unit_ >= 0) unbind();
+	unit_ = unit;
+	glBindTextureUnit(unit_, texture);
+}
+
+void Texture::unbind() {
+	glBindTextureUnit(unit_, 0);
+	unit_ = -1;
 }

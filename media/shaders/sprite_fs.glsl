@@ -1,10 +1,12 @@
 #version 330
 
-in UV;
-in Color;
+in vec2 UV;
+in vec4 Color;
 
-uniform sampler2D mainTexture
+out vec4 outColor;
+
+uniform sampler2D mainTexture;
 
 void main() {
-	gl_Fragcolor = texture(mainTexture, UV) * Color;
+	outColor = texture(mainTexture, UV) * Color;
 }

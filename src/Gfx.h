@@ -24,16 +24,44 @@ SOFTWARE.
 
 #pragma once
 
+#include "Vec2.h"
+#include "Vec3.h"
 #include "Vec4.h"
+#include "Mesh.h"
+#include "SpriteVertex.h"
 #include <SDL2/SDL.h>
+#include <vector>
+#include <map>
+#include <string>
+
+class Texture;
+class Shader;
+struct Sprite;
 
 class Gfx {
 public:
 	Gfx(const char* title, int width, int height, bool fullscreen);
 	~Gfx();
 
+	float getPixelScale() const { return pixelScale; }
+	void setPixelScale(float scale) { pixelScale = scale; }
+
 	void beginFrame();
-	void renderFrame();
+	void endFrame();
+
+	Texture* getTexture(const char* name);
+
+	void bindTexture(Texture*);
+
+	void drawTexture(Texture* texture, const Vec2& pos, const Vec4& color = Vec4::WHITE);
+	void drawTextureClip(Texture* texture, const Vec2& clipPos, const Vec2& clipSize, const Vec2& pos, const Vec2& size, const Vec4& color = Vec4::WHITE);
+	void drawTextureSliced(Texture* texture, const Vec2& clipPos, const Vec2& clipSize, const Vec4& borders, const Vec2& pos, const Vec2& size, const Vec4& color = Vec4::WHITE);
+	void drawText(Texture* dont, const char* text, const Vec2& pos, const Vec4& color = Vec4::WHITE);
+	void drawSprite(const Sprite&, const Vec2& position, const Vec2& size, const Vec4& color = Vec4::WHITE);
+
+private:
+	void beginSprites(Texture* texture);
+	void endSprites();
 
 private:
 	SDL_Window* window{ nullptr };
@@ -41,4 +69,15 @@ private:
 	unsigned int width;
 	unsigned int height;
 	Vec4 clearColor{ 1, 0, 1, 1 };
+	std::vector<Texture*> textureUnits;
+
+	// Sprite stuff
+	float pixelScale{ 1 };
+	Shader* spriteShader{ nullptr };
+	Texture* currentSpriteTexture{ nullptr };
+	std::vector<SpriteVertex> spriteVertices;
+	Mesh* spriteMesh{ nullptr };
+
+	// Resources
+	std::map<std::string, Texture*> loadedTextures;
 };

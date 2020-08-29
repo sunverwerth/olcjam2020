@@ -29,6 +29,7 @@ SOFTWARE.
 #include <algorithm>
 
 Image::Image(const char* filename) {
+	stbi_set_flip_vertically_on_load(1);
 	int w, h, components;
 	auto pixels = stbi_load(filename, &w, &h, &components, 0);
 	if (!pixels) {

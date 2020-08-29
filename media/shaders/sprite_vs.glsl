@@ -13,5 +13,5 @@ uniform vec2 screenSize;
 void main() {
 	UV = inUV;
 	Color = inColor;
-	gl_Position = vec4(inPosition * vec2(2, -2) / screenSize - 1, 0, 1);
+	gl_Position = vec4(inPosition * vec2(2, -2) / screenSize + vec2(-1, 1), 0, 1);
 }

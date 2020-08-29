@@ -27,16 +27,22 @@ SOFTWARE.
 union SDL_Event;
 class Gfx;
 class Timer;
+class Texture;
+struct Vec2;
 
 class Game {
 public:
 	Game(Gfx& gfx, Timer& timer) : gfx(gfx), timer(timer) {}
+	void start();
 	void handleEvent(const SDL_Event&);
 	bool shouldKeepRunning() const { return keepRunning; }
 	void prepareFrame();
+	void bubble(const char* text, const Vec2& pos, const Vec2& tippos);
 
 private:
 	bool keepRunning{ true };
 	Gfx& gfx;
 	Timer& timer;
+	Texture* font{ nullptr };
+	Texture* sprites{ nullptr };
 };
