@@ -43,6 +43,6 @@ private:
 	bool keepRunning{ true };
 	Gfx& gfx;
 	Timer& timer;
-	Texture* font{ nullptr };
+	Texture* guitexture{ nullptr };
 	Texture* sprites{ nullptr };
 };

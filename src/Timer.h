@@ -34,9 +34,9 @@ public:
 	int fps() const { return fps_; }
 
 private:
-	unsigned int startTick;
-	unsigned int lapTick;
-	unsigned int fpsTick;
+	unsigned long long startTick;
+	unsigned long long lapTick;
+	unsigned long long fpsTick;
 	float dt{ 0 };
 	double time{ 0 };
 	int fps_{ 0 };

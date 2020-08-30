@@ -25,17 +25,27 @@ SOFTWARE.
 #include "Texture.h"
 #include "glad.h"
 #include "Image.h"
+#include "sys.h"
 
 Texture::Texture(const Image& image): width_(image.width()), height_(image.height()) {
 	glCreateTextures(GL_TEXTURE_2D, 1, &texture);
 	glTextureStorage2D(texture, 1, GL_RGBA8, width_, height_);
-	glTextureSubImage2D(texture, 0, 0, 0, width_, height_, image.format() == Image::Format::RGB8 ? GL_RGB : GL_RGBA, GL_UNSIGNED_BYTE, image.data());
 	glTextureParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTextureParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	load(image);
 }
 
 Texture::~Texture() {
 	glDeleteTextures(1, &texture);
+}
+
+void Texture::load(const Image& image) {
+	if (image.width() != width_ || image.height() != height_) {
+		log_error("Texture can only be updated with same size image.");
+		return;
+	}
+
+	glTextureSubImage2D(texture, 0, 0, 0, width_, height_, image.format() == Image::Format::RGB8 ? GL_RGB : GL_RGBA, GL_UNSIGNED_BYTE, image.data());
 }
 
 void Texture::bind(int unit) {
@@ -45,6 +55,7 @@ void Texture::bind(int unit) {
 }
 
 void Texture::unbind() {
+	if (unit_ < 0) return;
 	glBindTextureUnit(unit_, 0);
 	unit_ = -1;
 }

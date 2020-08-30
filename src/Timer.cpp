@@ -23,17 +23,19 @@ SOFTWARE.
 */
 
 #include "Timer.h"
+#include "sys.h"
 #include <SDL2/SDL.h>
 
-Timer::Timer() : startTick(SDL_GetTicks()), lapTick(startTick), fpsTick(startTick) {}
+Timer::Timer() : startTick(SDL_GetPerformanceCounter()), lapTick(startTick), fpsTick(startTick) {}
 
 void Timer::lap() {
 	frameCount++;
-	unsigned int tick = SDL_GetTicks();
-	dt = (tick - lapTick) / 1000.0f;
-	time = (tick - startTick) / 1000.0;
+	unsigned long long frequency = SDL_GetPerformanceFrequency();
+	unsigned long long tick = SDL_GetPerformanceCounter();
+	dt = double(tick - lapTick) / frequency;
+	time = double(tick - startTick) / frequency;
 
-	if (tick - fpsTick >= 1000) {
+	if (tick - fpsTick >= frequency) {
 		fps_ = frameCount;
 		fpsTick = tick;
 		frameCount = 0;

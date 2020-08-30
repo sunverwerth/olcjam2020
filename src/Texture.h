@@ -31,6 +31,7 @@ public:
 	Texture(const Image&);
 	~Texture();
 
+	void load(const Image&);
 	void bind(int index);
 	void unbind();
 	int unit() const { return unit_; }

@@ -36,10 +36,11 @@ void APIENTRY debugCallback(GLenum source, GLenum type, GLuint id, GLenum severi
 	else log(message);
 }
 
-Gfx::Gfx(const char* title, int width, int height, bool fullscreen) : width(width), height(height) {
+Gfx::Gfx(const char* title, int width, int height, bool fullscreen) {
 	log("Gfx::gfx()");
 	window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_OPENGL);
 	if (!window) sys_crash("Could not create SDL window.");
+	SDL_GetWindowSize(window, &width_, &height_);
 
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
@@ -83,7 +84,7 @@ Gfx::~Gfx() {
 }
 
 void Gfx::beginFrame() {
-	glViewport(0, 0, width, height);
+	glViewport(0, 0, width_, height_);
 	glClearColor(clearColor.x, clearColor.y, clearColor.z, clearColor.w);
 	glClearDepth(1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -129,7 +130,7 @@ void Gfx::endSprites() {
 		spriteShader->use();
 		bindTexture(currentSpriteTexture);
 		spriteShader->texture("mainTexture", *currentSpriteTexture);
-		spriteShader->uniform("screenSize", Vec2(width, height));
+		spriteShader->uniform("screenSize", Vec2(width_, height_));
 		spriteMesh->setVertices(spriteVertices.data(), sizeof(SpriteVertex), spriteVertices.size());
 		spriteMesh->bind();
 		glDrawElements(GL_TRIANGLES, spriteMesh->numVertices() * 6 / 4, GL_UNSIGNED_SHORT, nullptr);
@@ -205,4 +206,8 @@ void Gfx::drawSprite(const Sprite& sprite, const Vec2& position, const Vec2& siz
 	else {
 		drawTextureClip(sprite.texture, sprite.clipPosition, sprite.clipSize, position, size, color);
 	}
+}
+
+void Gfx::drawSprite(const Sprite& sprite, const Vec2& position, const Vec4& color) {
+	drawSprite(sprite, position, sprite.clipSize, color);
 }

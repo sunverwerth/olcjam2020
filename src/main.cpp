@@ -38,7 +38,7 @@ int main(int argc, char** argv) {
 #endif
 	sys_init();
 
-	Gfx gfx("OLC CodeJam 2020", 1280, 800, false);
+	Gfx gfx("OLC CodeJam 2020", 1024, 768, false);
 	Timer timer;
 	Game game(gfx, timer);
 	
