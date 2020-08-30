@@ -42,6 +42,10 @@ public:
 	void bubble(const char* text, const Vec2& pos, const Vec2& tippos);
 	void createParticle(DustParticle& p);
 	bool inFrustum(const Vec2& pos) const;
+	void anyKeyPressed();
+	void spawnRocket(const Vec2& pos, const Vec2& target, float speed);
+	void spawnDrone(const Vec2& pos);
+	void spawnExplosion(const Vec2& pos);
 
 private:
 	bool keepRunning{ true };

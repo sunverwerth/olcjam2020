@@ -48,6 +48,7 @@ public:
 
 	float getPixelScale() const { return pixelScale; }
 	void setPixelScale(float scale) { pixelScale = scale; }
+	void setClearColor(const Vec4& color) { clearColor = color; }
 
 	void beginFrame();
 	void endFrame();

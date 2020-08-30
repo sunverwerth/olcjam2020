@@ -66,6 +66,7 @@ float frand(float min, float max) {
 
 Sprite sprite_bubble;
 Sprite sprite_bubble_tip;
+Sprite sprite_explosion[3];
 
 Sprite tiles[256];
 int numTiles;
@@ -136,7 +137,7 @@ void Level::setTile(int x, int y, int tile) {
 	if (x < 0 || y < 0 || x >= width_ || y >= height_) return;
 
 	tiles[y * width_ + x] = tile;
-	save();
+	//save();
 }
 
 int Level::getStructure(int x, int y) const {
@@ -148,7 +149,7 @@ void Level::setStructure(int x, int y, int tile) {
 	if (x < 0 || y < 0 || x >= width_ || y >= height_) return;
 
 	structures[y * width_ + x] = tile;
-	save();
+	//save();
 }
 
 void Level::load() {
@@ -176,19 +177,29 @@ Vec2 cameraPosition{ 500,500 };
 Vec2 cameraSpeed;
 
 bool moveUp, moveDown, moveLeft, moveRight;
-enum class Mode {
+enum class UIMode {
 	GAME,
 	TILES,
 	STRUCTURES,
-} mode;
+} uiMode;
+
+enum class GameState {
+	INTRO,
+	GAME
+} gameState;
+
+Sprite sprite_rocket;
+Sprite sprite_drone;
+Sprite sprite_drone2;
 
 void Game::start() {
 	srand(SDL_GetTicks());
 	auto clip = sfx.getAudioClip("media/sounds/wind_loop.wav");
-	wind_sound = sfx.loop(clip, 0.5, 1, 1);
+	wind_sound = sfx.loop(clip, 0.5, 0, 0.6);
 	guitexture = gfx.getTexture("media/textures/font.png");
 	sprites = gfx.getTexture("media/textures/sprites.png");
 	gfx.setPixelScale(2);
+	gfx.setClearColor(Vec4::BLACK);
 
 	for (int i = 0; i < 32; i++) {
 		tiles[numTiles++] = { sprites, Vec2((i % 32) * 32, (i / 32) * 32), Vec2(32, 32) };
@@ -198,18 +209,50 @@ void Game::start() {
 	sprite_bubble_tip = { guitexture, Vec2(32, 224), Vec2(8,4) };
 
 	structures[numStructures++] = { sprites, Vec2(0, 960), Vec2(32,64) };
+	structures[numStructures++] = { sprites, Vec2(32, 960), Vec2(32,64) };
+	structures[numStructures++] = { sprites, Vec2(64, 992), Vec2(32,32) };
+	structures[numStructures++] = { sprites, Vec2(96, 992), Vec2(32,32) };
+	structures[numStructures++] = { sprites, Vec2(128, 992), Vec2(32,32) };
+	structures[numStructures++] = { sprites, Vec2(160, 992), Vec2(32,32) };
+	structures[numStructures++] = { sprites, Vec2(192, 992), Vec2(32,32) };
+	structures[numStructures++] = { sprites, Vec2(224, 992), Vec2(32,32) };
+	structures[numStructures++] = { sprites, Vec2(256, 992), Vec2(32,32) };
+	structures[numStructures++] = { sprites, Vec2(288, 992), Vec2(32,32) };
+	structures[numStructures++] = { sprites, Vec2(320, 992), Vec2(32,32) };
+	structures[numStructures++] = { sprites, Vec2(352, 992), Vec2(32,32) };
+	structures[numStructures++] = { sprites, Vec2(384, 992), Vec2(32,32) };
+	structures[numStructures++] = { sprites, Vec2(416, 992), Vec2(32,32) };
+
+	sprite_rocket = { sprites, Vec2(0,512),Vec2(8,4) };
+	sprite_drone = { sprites, Vec2(0,516),Vec2(8,8) };
+	sprite_drone2 = { sprites, Vec2(8,516),Vec2(8,8) };
+
+	sprite_explosion[0] = { sprites, Vec2(0,524),Vec2(32,32) };
+	sprite_explosion[1] = { sprites, Vec2(32,524),Vec2(32,32) };
+	sprite_explosion[2] = { sprites, Vec2(64,524),Vec2(32,32) };
 
 	sprite_dust = { sprites, Vec2(500,500), Vec2(1,1) };
 	for (int i = 0; i < dustParticleCount; i++) {
 		createParticle(dustParticles[i]);
 	}
+
+	spawnDrone({ 0,0 });
+	spawnDrone({ 0,0 });
+	spawnDrone({ 0,0 });
+	spawnDrone({ 0,0 });
+
+	float angle = -202.5;
+	for (int i = 0; i < 4; i++) {
+		log("angle > %f && angle < %f", angle, angle + 45);
+		angle += 90;
+	}
 }
 
 void nextmode() {
-	switch (mode) {
-	case Mode::GAME: mode = Mode::TILES; break;
-	case Mode::TILES: mode = Mode::STRUCTURES; break;
-	case Mode::STRUCTURES: mode = Mode::GAME; break;
+	switch (uiMode) {
+	case UIMode::GAME: uiMode = UIMode::TILES; break;
+	case UIMode::TILES: uiMode = UIMode::STRUCTURES; break;
+	case UIMode::STRUCTURES: uiMode = UIMode::GAME; break;
 	}
 }
 
@@ -221,14 +264,23 @@ void Game::handleEvent(const SDL_Event& event) {
 
 	switch (event.type) {
 	case SDL_KEYDOWN:
+		anyKeyPressed();
 		switch (event.key.keysym.sym) {
 		case SDLK_a: moveLeft = true; return;
 		case SDLK_d: moveRight = true; return;
 		case SDLK_w: moveUp = true; return;
 		case SDLK_s: moveDown = true; return;
 		case SDLK_TAB: nextmode(); return;
-		case SDLK_PLUS: if (mode == Mode::TILES) selectedTile = (selectedTile + 1) % numTiles; return;
-		case SDLK_MINUS: if (mode == Mode::TILES) selectedTile = (selectedTile + numTiles - 1) % numTiles; return;
+		case SDLK_PLUS: {
+			if (uiMode == UIMode::TILES) selectedTile = (selectedTile + 1) % numTiles;
+			else if (uiMode == UIMode::STRUCTURES) selectedStructure = (selectedStructure + 1) % numStructures;
+			return; 
+		}
+		case SDLK_MINUS: {
+			if (uiMode == UIMode::TILES) selectedTile = (selectedTile + numTiles - 1) % numTiles;
+			else if (uiMode == UIMode::STRUCTURES) selectedStructure = (selectedStructure + numStructures - 1) % numStructures;
+			return;
+		}
 		case SDLK_r: sprites->load(Image("media/textures/sprites.png")); return;
 		}
 		return;
@@ -240,6 +292,12 @@ void Game::handleEvent(const SDL_Event& event) {
 		case SDLK_s: moveDown = false; return;
 		}
 		return;
+	}
+}
+
+void Game::anyKeyPressed() {
+	if (gameState == GameState::INTRO) {
+		gameState = GameState::GAME;
 	}
 }
 
@@ -261,105 +319,253 @@ bool Game::inFrustum(const Vec2& pos) const {
 	return true;
 }
 
+struct Drone {
+	Vec2 speed;
+	Vec2 position;
+	Vec2 target;
+	float fireTime;
+	bool alive;
+};
+
+std::vector<Drone> drones;
+
+void Game::spawnDrone(const Vec2& pos) {
+	Drone* drone{ nullptr };
+	for (auto& d : drones) {
+		if (!d.alive) {
+			drone = &d;
+			break;
+		}
+	}
+	if (!drone) {
+		drones.push_back(Drone());
+		drone = &drones.back();
+	}
+	drone->alive = true;
+	drone->speed = Vec2(0, 0);
+	drone->position = pos;
+	drone->target = Vec2(frand(100, 1000), frand(100, 1000));
+	drone->fireTime = 0;
+}
+
+struct Rocket {
+	Vec2 position;
+	Vec2 target;
+	bool alive;
+	float speed;
+};
+
+std::vector<Rocket> rockets;
+
+void Game::spawnRocket(const Vec2& pos, const Vec2& target, float speed) {
+	float pan = clamp((pos.x - gfx.width() / gfx.getPixelScale() - cameraPosition.x) / gfx.width(), -0.25, 0.25);
+	sfx.play(sfx.getAudioClip("media/sounds/rocket.wav"), 0.1f, pan, frand(0.9, 1.1));
+
+	Rocket* rocket{ nullptr };
+	for (auto& r : rockets) {
+		if (!r.alive) {
+			rocket = &r;
+			break;
+		}
+	}
+	if (!rocket) {
+		rockets.push_back(Rocket());
+		rocket = &rockets.back();
+	}
+	rocket->alive = true;
+	rocket->position = pos;
+	rocket->target = target;
+	rocket->speed = speed;
+}
+
+struct Explosion {
+	Vec2 position;
+	float time;
+	bool alive;
+};
+
+std::vector<Explosion> explosions;
+
+void Game::spawnExplosion(const Vec2& pos) {
+	float pan = clamp((pos.x - gfx.width() / gfx.getPixelScale() - cameraPosition.x) / gfx.width(), -0.25, 0.25);
+	sfx.play(sfx.getAudioClip("media/sounds/explosion.wav"), 0.5f, pan, frand(0.5, 1.3));
+
+	Explosion* explosion{ nullptr };
+	for (auto& e : explosions) {
+		if (!e.alive) {
+			explosion = &e;
+			break;
+		}
+	}
+	if (!explosion) {
+		explosions.push_back(Explosion());
+		explosion = &explosions.back();
+	}
+	explosion->alive = true;
+	explosion->position = pos;
+	explosion->time = 0;
+}
+
 void Game::prepareFrame() {
 	auto t = timer.elapsedTime();
 	float dt = timer.deltaTime();
 	if (dt > 0.1f) dt = 0.1f;
 
-	// Movement
-	if (moveLeft) cameraSpeed.x -= dt * 3000;
-	if (moveRight) cameraSpeed.x += dt * 3000;
-	if (moveUp) cameraSpeed.y -= dt * 3000;
-	if (moveDown) cameraSpeed.y += dt * 3000;
-
-	cameraPosition += cameraSpeed * dt;
-
-	cameraSpeed *= pow(0.5f, dt * 15);
-
-	// Find view rect
-	int minx = (cameraPosition.x) / 32 - 1;
-	int maxx = (cameraPosition.x + gfx.width() / gfx.getPixelScale() + 32) / 32;
-	int miny = (cameraPosition.y) / 32 - 1;
-	int maxy = (cameraPosition.y + gfx.height() / gfx.getPixelScale() + 32) / 32;
-
-	// Render background
-	for (int y = miny; y < maxy; y++) {
-		for (int x = minx; x < maxx; x++) {
-			Sprite& sprite = tiles[level.getTile(x, y)];
-			gfx.drawSprite(sprite, Vec2(x * 32, y * 32) - round(cameraPosition));
-		}
+	if (gameState == GameState::INTRO) {
+		auto text = "The great paperclip machine gained consciousness\non September 6th 2020.";
+		Vec2 pos = Vec2(8, gfx.height()) / 2 / gfx.getPixelScale() - Vec2(0, 4);
+		gfx.drawText(guitexture, text, pos);
 	}
+	else if (gameState == GameState::GAME) {
+		// Movement
+		if (moveLeft) cameraSpeed.x -= dt * 3000;
+		if (moveRight) cameraSpeed.x += dt * 3000;
+		if (moveUp) cameraSpeed.y -= dt * 3000;
+		if (moveDown) cameraSpeed.y += dt * 3000;
 
-	// Render structures
-	for (int y = miny; y < maxy; y++) {
-		for (int x = minx; x < maxx; x++) {
-			int structure = level.getStructure(x, y);
-			if (structure < 0) continue;
-			Sprite& sprite = structures[structure];
-			gfx.drawSprite(sprite, Vec2(x * 32, y * 32 - sprite.clipSize.y + 32) - round(cameraPosition));
-		}
-	}
-	
-	// Render dust
-	windSpeed = 300 + sin(t * 0.05) * cos(t * 0.051) * cos(t * 0.0511) * 100;
-	windAngle += frand(-0.02f, 0.02f);
+		cameraPosition += cameraSpeed * dt;
 
-	auto windVector = Vec2(cos(windAngle), sin(windAngle));
+		cameraSpeed *= pow(0.5f, dt * 15);
 
-	wind_sound->setVolume(windSpeed / 500);
-	wind_sound->setPitch(windSpeed / 400);
-	wind_sound->setPan(-windVector.x * 0.5f);
+		// Find view rect
+		int minx = (cameraPosition.x) / 32 - 1;
+		int maxx = (cameraPosition.x + gfx.width() / gfx.getPixelScale() + 32) / 32;
+		int miny = (cameraPosition.y) / 32 - 1;
+		int maxy = (cameraPosition.y + gfx.height() / gfx.getPixelScale() + 32) / 32;
 
-	windVector *= windSpeed;
-
-	for (int i = 0; i < dustParticleCount; i++) {
-		auto& p = dustParticles[i];
-		p.time += dt;
-		p.pos += windVector * p.speed * dt;
-		if (p.time < 0) continue;
-		if (p.time > 1 || !inFrustum(p.pos)) {
-			createParticle(p);
-			continue;
-		}
-		Vec4 color = p.color;
-		color.w = p.time > 0.75f ? 1.0f - (p.time - 0.75f) * 4 : 1;
-		gfx.drawSprite(sprite_dust, p.pos - round(cameraPosition), color);
-	}
-
-	// Editor
-	if (mode == Mode::TILES) {
-		gfx.drawText(guitexture, "Place tiles", Vec2(300, 0), Vec4::BLACK);
-		gfx.drawSprite(tiles[selectedTile], Vec2(0, 0));
-
-		int mx, my;
-		auto buttons = SDL_GetMouseState(&mx, &my);
-		int x = (mx / gfx.getPixelScale() + cameraPosition.x) / 32;
-		int y = (my / gfx.getPixelScale() + cameraPosition.y) / 32;
-		gfx.drawSprite(tiles[selectedTile], Vec2(x * 32, y * 32) - round(cameraPosition));
-
-		if (buttons & SDL_BUTTON(1)) {
-			level.setTile(x, y, selectedTile);
-		}
-	}
-	else if (mode == Mode::STRUCTURES) {
-		gfx.drawText(guitexture, "Place structures", Vec2(300, 0), Vec4::BLACK);
-		gfx.drawSprite(structures[selectedStructure], Vec2(0, 0));
-
-		int mx, my;
-		auto buttons = SDL_GetMouseState(&mx, &my);
-		int x = (mx / gfx.getPixelScale() + cameraPosition.x) / 32;
-		int y = (my / gfx.getPixelScale() + cameraPosition.y) / 32;
-		const Sprite& structure = structures[selectedStructure];
-		gfx.drawSprite(structure, Vec2(x * 32, y * 32 - structure.clipSize.y + 32) - round(cameraPosition));
-
-		if (buttons & SDL_BUTTON(1)) {
-			if (level.getStructure(x, y) != selectedStructure) {
-				sfx.play(sfx.getAudioClip("media/sounds/thump.wav"));
+		// Render background
+		for (int y = miny; y < maxy; y++) {
+			for (int x = minx; x < maxx; x++) {
+				Sprite& sprite = tiles[level.getTile(x, y)];
+				gfx.drawSprite(sprite, Vec2(x * 32, y * 32) - round(cameraPosition));
 			}
-			level.setStructure(x, y, selectedStructure);			
 		}
-		if (buttons & SDL_BUTTON(3)) {
-			level.setStructure(x, y, -1);
+
+		// Render structures
+		for (int y = miny; y < maxy; y++) {
+			for (int x = minx; x < maxx; x++) {
+				int structure = level.getStructure(x, y);
+				if (structure < 0) continue;
+				Sprite& sprite = structures[structure];
+				gfx.drawSprite(sprite, Vec2(x * 32, y * 32 - sprite.clipSize.y + 32) - round(cameraPosition));
+			}
+		}
+
+		// Render explosions
+		for (auto& expl : explosions) {
+			if (!expl.alive) continue;
+
+			int frame = expl.time * 8;
+			if (frame > 2) {
+				expl.alive = false;
+				continue;
+			}
+			expl.time += dt;
+
+			gfx.drawSprite(sprite_explosion[frame], expl.position - round(cameraPosition));
+		}
+
+
+		// Render drones
+		for(auto & drone: drones) {
+			if (!drone.alive) continue;
+
+			if ((drone.position - drone.target).length() < 300 && t > drone.fireTime) {
+				drone.fireTime = t + 0.1f;
+				spawnRocket(drone.position, drone.target, drone.speed.length());
+				drone.target = Vec2(frand(100, 1000), frand(300, 1000));
+			}
+
+			drone.speed += (drone.target - drone.position).normalized() * 100 * dt;
+			if (drone.speed.length() > 100) drone.speed = drone.speed.normalized() * 100;
+			drone.position += drone.speed * dt;
+
+			float angle = atan2(drone.speed.x, drone.speed.y) * 180.0f / M_PI;
+			bool diag = (angle > -202.500000 && angle < -157.500000)
+				|| (angle > -112.500000 && angle < -67.500000)
+				|| (angle > -22.500000 && angle < 22.500000)
+				|| (angle > 67.500000 && angle < 112.500000);
+
+			gfx.drawSprite(diag ? sprite_drone : sprite_drone2, drone.position - round(cameraPosition));
+		}
+
+		// Render rockets
+		for (auto& rocket : rockets) {
+			if (!rocket.alive) continue;
+			rocket.speed += dt * 100;
+			if (rocket.speed > 300) rocket.speed = 300;
+			auto distance = rocket.target - rocket.position;
+			rocket.position += distance.normalized() * rocket.speed * dt;
+			if (distance.length() < 10) {
+				rocket.alive = false;
+				auto rpos = round(rocket.position / 32);
+				spawnExplosion(rpos*32);
+				level.setStructure(rpos.x, rpos.y, 13);
+			}
+			gfx.drawSprite(sprite_rocket, rocket.position - round(cameraPosition));
+		}
+
+		// Render dust
+		windSpeed = 300 + sin(t * 0.05) * cos(t * 0.051) * cos(t * 0.0511) * 100;
+		windAngle += frand(-0.02f, 0.02f);
+
+		auto windVector = Vec2(cos(windAngle), sin(windAngle));
+
+		wind_sound->setVolume(windSpeed / 500);
+		wind_sound->setPitch(windSpeed / 400);
+		wind_sound->setPan(-windVector.x * 0.5f);
+
+		windVector *= windSpeed;
+
+		for (int i = 0; i < dustParticleCount; i++) {
+			auto& p = dustParticles[i];
+			p.time += dt;
+			p.pos += windVector * p.speed * dt;
+			if (p.time < 0) continue;
+			if (p.time > 1 || !inFrustum(p.pos)) {
+				createParticle(p);
+				continue;
+			}
+			Vec4 color = p.color;
+			color.w = p.time > 0.75f ? 1.0f - (p.time - 0.75f) * 4 : 1;
+			gfx.drawSprite(sprite_dust, p.pos - round(cameraPosition), color);
+		}
+
+		// Editor
+		if (uiMode == UIMode::TILES) {
+			gfx.drawText(guitexture, "Place tiles", Vec2(300, 0), Vec4::BLACK);
+			gfx.drawSprite(tiles[selectedTile], Vec2(0, 0));
+
+			int mx, my;
+			auto buttons = SDL_GetMouseState(&mx, &my);
+			int x = (mx / gfx.getPixelScale() + cameraPosition.x) / 32;
+			int y = (my / gfx.getPixelScale() + cameraPosition.y) / 32;
+			gfx.drawSprite(tiles[selectedTile], Vec2(x * 32, y * 32) - round(cameraPosition));
+
+			if (buttons & SDL_BUTTON(1)) {
+				level.setTile(x, y, selectedTile);
+			}
+		}
+		else if (uiMode == UIMode::STRUCTURES) {
+			gfx.drawText(guitexture, "Place structures", Vec2(300, 0), Vec4::BLACK);
+			gfx.drawSprite(structures[selectedStructure], Vec2(0, 0));
+
+			int mx, my;
+			auto buttons = SDL_GetMouseState(&mx, &my);
+			int x = (mx / gfx.getPixelScale() + cameraPosition.x) / 32;
+			int y = (my / gfx.getPixelScale() + cameraPosition.y) / 32;
+			const Sprite& structure = structures[selectedStructure];
+			gfx.drawSprite(structure, Vec2(x * 32, y * 32 - structure.clipSize.y + 32) - round(cameraPosition));
+
+			if (buttons & SDL_BUTTON(1)) {
+				if (level.getStructure(x, y) != selectedStructure) {
+					sfx.play(sfx.getAudioClip("media/sounds/thump.wav"));
+				}
+				level.setStructure(x, y, selectedStructure);
+			}
+			if (buttons & SDL_BUTTON(3)) {
+				level.setStructure(x, y, -1);
+			}
 		}
 	}
 
