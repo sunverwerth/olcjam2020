@@ -24,30 +24,29 @@ SOFTWARE.
 
 #pragma once
 
-union SDL_Event;
-class Gfx;
-class Sfx;
-class Timer;
-class Texture;
-struct Vec2;
-struct DustParticle;
+#include <SDL2/SDL.h>
+#include <map>
+#include <string>
+#include <vector>
 
-class Game {
+class AudioClip;
+class AudioTrack;
+
+class Sfx {
 public:
-	Game(Gfx& gfx, Sfx& sfx, Timer& timer) : gfx(gfx), sfx(sfx), timer(timer) {}
-	void start();
-	void handleEvent(const SDL_Event&);
-	bool shouldKeepRunning() const { return keepRunning; }
-	void prepareFrame();
-	void bubble(const char* text, const Vec2& pos, const Vec2& tippos);
-	void createParticle(DustParticle& p);
-	bool inFrustum(const Vec2& pos) const;
+	Sfx();
+	~Sfx();
+
+	AudioClip* getAudioClip(const char* filename);
+	AudioTrack* play(AudioClip*, float volume = 1.0f, float pan = 0.0f, float pitch = 1.0f, bool loop = false);
+	AudioTrack* loop(AudioClip*, float volume = 1.0f, float pan = 0.0f, float pitch = 1.0f);
 
 private:
-	bool keepRunning{ true };
-	Gfx& gfx;
-	Sfx& sfx;
-	Timer& timer;
-	Texture* guitexture{ nullptr };
-	Texture* sprites{ nullptr };
+	static void SDLCALL audioCallback(void* userdata, unsigned char* stream, int len);
+
+private:
+	std::vector<AudioTrack*> audioTracks;
+	std::map<std::string, AudioClip*> audioClips;
+	SDL_AudioDeviceID device{ 0 };
+	SDL_AudioSpec spec{};
 };

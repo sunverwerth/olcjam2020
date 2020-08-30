@@ -24,30 +24,31 @@ SOFTWARE.
 
 #pragma once
 
-union SDL_Event;
-class Gfx;
 class Sfx;
-class Timer;
-class Texture;
-struct Vec2;
-struct DustParticle;
+class AudioClip;
 
-class Game {
+class AudioTrack {
+	friend class Sfx;
 public:
-	Game(Gfx& gfx, Sfx& sfx, Timer& timer) : gfx(gfx), sfx(sfx), timer(timer) {}
-	void start();
-	void handleEvent(const SDL_Event&);
-	bool shouldKeepRunning() const { return keepRunning; }
-	void prepareFrame();
-	void bubble(const char* text, const Vec2& pos, const Vec2& tippos);
-	void createParticle(DustParticle& p);
-	bool inFrustum(const Vec2& pos) const;
+	AudioTrack(AudioClip* clip, float volume, float pan, float pitch, bool loop):
+		clip(clip),
+		volume(volume),
+		pan(pan),
+		pitch(pitch),
+		loop(loop) {}
+
+	bool isFree() const;
+	void render(float* buffer, int numSamples);
+	void setVolume(float newVolume) { volume = newVolume; }
+	void setPan(float newPan) { pan = newPan; }
+	void setPitch(float newPitch) { pitch = newPitch; }
 
 private:
-	bool keepRunning{ true };
-	Gfx& gfx;
-	Sfx& sfx;
-	Timer& timer;
-	Texture* guitexture{ nullptr };
-	Texture* sprites{ nullptr };
+	AudioClip* clip;
+	float volume;	
+	float pan;
+	float pitch;
+	bool loop;
+
+	int nextSample{ 0 };
 };

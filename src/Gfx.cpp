@@ -38,7 +38,9 @@ void APIENTRY debugCallback(GLenum source, GLenum type, GLuint id, GLenum severi
 
 Gfx::Gfx(const char* title, int width, int height, bool fullscreen) {
 	log("Gfx::gfx()");
-	window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_OPENGL);
+	int windowFlags = SDL_WINDOW_OPENGL;
+	if (fullscreen) windowFlags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+	window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, windowFlags);
 	if (!window) sys_crash("Could not create SDL window.");
 	SDL_GetWindowSize(window, &width_, &height_);
 

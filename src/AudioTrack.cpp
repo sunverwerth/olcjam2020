@@ -22,32 +22,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#pragma once
+#include "AudioTrack.h"
+#include "AudioClip.h"
+#include <cstdlib>
+bool AudioTrack::isFree() const {
+	return !(loop || nextSample < clip->numSamples());
+}
 
-union SDL_Event;
-class Gfx;
-class Sfx;
-class Timer;
-class Texture;
-struct Vec2;
-struct DustParticle;
-
-class Game {
-public:
-	Game(Gfx& gfx, Sfx& sfx, Timer& timer) : gfx(gfx), sfx(sfx), timer(timer) {}
-	void start();
-	void handleEvent(const SDL_Event&);
-	bool shouldKeepRunning() const { return keepRunning; }
-	void prepareFrame();
-	void bubble(const char* text, const Vec2& pos, const Vec2& tippos);
-	void createParticle(DustParticle& p);
-	bool inFrustum(const Vec2& pos) const;
-
-private:
-	bool keepRunning{ true };
-	Gfx& gfx;
-	Sfx& sfx;
-	Timer& timer;
-	Texture* guitexture{ nullptr };
-	Texture* sprites{ nullptr };
-};
+void AudioTrack::render(float* buffer, int numSamples) {
+	nextSample = clip->render(buffer, numSamples, nextSample, volume, pan, pitch, loop);
+}

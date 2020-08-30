@@ -24,10 +24,12 @@ SOFTWARE.
 
 #include "Game.h"
 #include "Gfx.h"
+#include "Sfx.h"
 #include "Timer.h"
 #include "Sprite.h"
 #include "Image.h"
 #include "Texture.h"
+#include "AudioTrack.h"
 #include <SDL2/SDL.h>
 #include <cmath>
 
@@ -52,6 +54,16 @@ int longestLine(const char* text) {
 	return longest;
 }
 
+float clamp(float  v, float  min, float  max) {
+	if (v < min) return min;
+	if (v > max) return max;
+	return v;
+}
+
+float frand(float min, float max) {
+	return min + (max - min) * rand() / RAND_MAX;
+}
+
 Sprite sprite_bubble;
 Sprite sprite_bubble_tip;
 
@@ -62,6 +74,20 @@ int selectedTile;
 Sprite structures[256];
 int numStructures;
 int selectedStructure;
+
+struct DustParticle {
+	Vec2 pos;
+	Vec4 color;
+	float speed;
+	float time;
+};
+
+float windSpeed;
+float windAngle;
+Sprite sprite_dust;
+const int dustParticleCount = 50;
+DustParticle dustParticles[dustParticleCount];
+AudioTrack* wind_sound;
 
 class Level {
 public:
@@ -157,6 +183,9 @@ enum class Mode {
 } mode;
 
 void Game::start() {
+	srand(SDL_GetTicks());
+	auto clip = sfx.getAudioClip("media/sounds/wind_loop.wav");
+	wind_sound = sfx.loop(clip, 0.5, 1, 1);
 	guitexture = gfx.getTexture("media/textures/font.png");
 	sprites = gfx.getTexture("media/textures/sprites.png");
 	gfx.setPixelScale(2);
@@ -169,6 +198,11 @@ void Game::start() {
 	sprite_bubble_tip = { guitexture, Vec2(32, 224), Vec2(8,4) };
 
 	structures[numStructures++] = { sprites, Vec2(0, 960), Vec2(32,64) };
+
+	sprite_dust = { sprites, Vec2(500,500), Vec2(1,1) };
+	for (int i = 0; i < dustParticleCount; i++) {
+		createParticle(dustParticles[i]);
+	}
 }
 
 void nextmode() {
@@ -209,9 +243,28 @@ void Game::handleEvent(const SDL_Event& event) {
 	}
 }
 
+void Game::createParticle(DustParticle& p) {
+	p.pos = cameraPosition + Vec2(rand() % int(gfx.width() / gfx.getPixelScale()), rand() % int(gfx.height() / gfx.getPixelScale()));
+	p.speed = 0.5f + (float)rand() / RAND_MAX / 2;
+	p.time = 0;
+	p.color = Vec4(1, 0.9, 0.7, 1) * frand(0, 1);
+	p.color.w = 1;
+}
+
+bool Game::inFrustum(const Vec2& pos) const {
+	float w = gfx.width() / gfx.getPixelScale();
+	float h = gfx.width() / gfx.getPixelScale();
+	if (pos.x < cameraPosition.x) return false;
+	if (pos.y < cameraPosition.y) return false;
+	if (pos.x > cameraPosition.x + w) return false;
+	if (pos.y > cameraPosition.y + h) return false;
+	return true;
+}
+
 void Game::prepareFrame() {
 	auto t = timer.elapsedTime();
 	float dt = timer.deltaTime();
+	if (dt > 0.1f) dt = 0.1f;
 
 	// Movement
 	if (moveLeft) cameraSpeed.x -= dt * 3000;
@@ -246,6 +299,32 @@ void Game::prepareFrame() {
 			gfx.drawSprite(sprite, Vec2(x * 32, y * 32 - sprite.clipSize.y + 32) - round(cameraPosition));
 		}
 	}
+	
+	// Render dust
+	windSpeed = 300 + sin(t * 0.05) * cos(t * 0.051) * cos(t * 0.0511) * 100;
+	windAngle += frand(-0.02f, 0.02f);
+
+	auto windVector = Vec2(cos(windAngle), sin(windAngle));
+
+	wind_sound->setVolume(windSpeed / 500);
+	wind_sound->setPitch(windSpeed / 400);
+	wind_sound->setPan(-windVector.x * 0.5f);
+
+	windVector *= windSpeed;
+
+	for (int i = 0; i < dustParticleCount; i++) {
+		auto& p = dustParticles[i];
+		p.time += dt;
+		p.pos += windVector * p.speed * dt;
+		if (p.time < 0) continue;
+		if (p.time > 1 || !inFrustum(p.pos)) {
+			createParticle(p);
+			continue;
+		}
+		Vec4 color = p.color;
+		color.w = p.time > 0.75f ? 1.0f - (p.time - 0.75f) * 4 : 1;
+		gfx.drawSprite(sprite_dust, p.pos - round(cameraPosition), color);
+	}
 
 	// Editor
 	if (mode == Mode::TILES) {
@@ -274,7 +353,10 @@ void Game::prepareFrame() {
 		gfx.drawSprite(structure, Vec2(x * 32, y * 32 - structure.clipSize.y + 32) - round(cameraPosition));
 
 		if (buttons & SDL_BUTTON(1)) {
-			level.setStructure(x, y, selectedStructure);
+			if (level.getStructure(x, y) != selectedStructure) {
+				sfx.play(sfx.getAudioClip("media/sounds/thump.wav"));
+			}
+			level.setStructure(x, y, selectedStructure);			
 		}
 		if (buttons & SDL_BUTTON(3)) {
 			level.setStructure(x, y, -1);

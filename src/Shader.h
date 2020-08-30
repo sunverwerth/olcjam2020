@@ -29,6 +29,9 @@ struct Vec2;
 struct Vec3;
 struct Vec4;
 
+#include <map>
+#include <string>
+
 class Shader{
 public:
 	Shader(const char* vsfile, const char* fsfile);
@@ -36,6 +39,7 @@ public:
 
 	void use() const;
 
+	int getUniformLocation(const char* name) const;
 	void uniform(const char*, float);
 	void uniform(const char*, const Vec2&);
 	void uniform(const char*, const Vec3&);
@@ -44,4 +48,5 @@ public:
 
 private:
 	unsigned int program{ 0 };
+	std::map<std::string, int> uniformLocations;
 };

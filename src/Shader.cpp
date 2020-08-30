@@ -95,6 +95,17 @@ Shader::Shader(const char* vsfile, const char* fsfile) {
 
 	glDeleteShader(vs);
 	glDeleteShader(fs);
+
+	int uniformCount;
+	glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &uniformCount);
+	char uniformName[256];
+	for (int i = 0; i < uniformCount; i++){
+		int length;
+		int size;
+		GLenum type;
+		glGetActiveUniform(program, (GLuint)i, 256, &length, &size, &type, uniformName);
+		uniformLocations[uniformName] = i;
+	}
 }
 
 Shader::~Shader() {
@@ -105,32 +116,38 @@ void Shader::use() const {
 	glUseProgram(program);
 }
 
+int Shader::getUniformLocation(const char* name) const {
+	auto it = uniformLocations.find(name);
+	if (it == uniformLocations.end()) return -1;
+	return it->second;
+}
+
 void Shader::uniform(const char* name, float v) {
-	auto location = glGetUniformLocation(program, name);
+	auto location = getUniformLocation(name);
 	if (location < 0) return;
 	glUniform1f(location, v);
 }
 
 void Shader::uniform(const char* name, const Vec2& v) {
-	auto location = glGetUniformLocation(program, name);
+	auto location = getUniformLocation(name);
 	if (location < 0) return;
 	glUniform2fv(location, 1, &v.x);
 }
 
 void Shader::uniform(const char* name, const Vec3& v) {
-	auto location = glGetUniformLocation(program, name);
+	auto location = getUniformLocation(name);
 	if (location < 0) return;
 	glUniform3fv(location, 1, &v.x);
 }
 
 void Shader::uniform(const char* name, const Vec4& v) {
-	auto location = glGetUniformLocation(program, name);
+	auto location = getUniformLocation(name);
 	if (location < 0) return;
 	glUniform4fv(location, 1, &v.x);
 }
 
 void Shader::texture(const char* name, const Texture& t) {
-	auto location = glGetUniformLocation(program, name);
+	auto location = getUniformLocation(name);
 	if (location < 0) return;
 	glUniform1i(location, t.unit());
 }

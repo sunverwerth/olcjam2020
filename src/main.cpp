@@ -26,6 +26,7 @@ SOFTWARE.
 #include "Gfx.h"
 #include "Timer.h"
 #include "Game.h"
+#include "Sfx.h"
 
 #define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
@@ -39,8 +40,9 @@ int main(int argc, char** argv) {
 	sys_init();
 
 	Gfx gfx("OLC CodeJam 2020", 1024, 768, false);
+	Sfx sfx;
 	Timer timer;
-	Game game(gfx, timer);
+	Game game(gfx, sfx, timer);
 	
 	game.start();
 
