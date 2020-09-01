@@ -2,6 +2,10 @@
 
 ## Dev screenshots, newest on top
 
+## 2020-09-01
+Enemy waves and build menu
+![Structures](screenshots/2020-09-01_2355.png)
+
 ## 2020-08-30
 Killer drones!
 ![Structures](screenshots/2020-08-31_0123.png)
