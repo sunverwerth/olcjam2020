@@ -24,13 +24,16 @@ SOFTWARE.
 
 #pragma once
 
+#include "Vec2.h"
+
 union SDL_Event;
 class Gfx;
 class Sfx;
 class Timer;
 class Texture;
-struct Vec2;
 struct DustParticle;
+struct Sprite;
+struct BuildInfo;
 
 class Game {
 public:
@@ -41,11 +44,23 @@ public:
 	void prepareFrame();
 	void bubble(const char* text, const Vec2& pos, const Vec2& tippos);
 	void createParticle(DustParticle& p);
-	bool inFrustum(const Vec2& pos) const;
+	bool inViewport(const Vec2& pos) const;
 	void anyKeyPressed();
 	void spawnRocket(const Vec2& pos, const Vec2& target, float speed);
 	void spawnDrone(const Vec2& pos);
 	void spawnExplosion(const Vec2& pos);
+	void prepareGUI();
+
+	bool isMouseOver(const Vec2& pos, const Vec2& size);
+
+	bool button(const char* text, const Vec2& pos, const Vec2& size = Vec2(0, 0));
+	bool button(const Sprite& sprite, const char* tooltip, const Vec2& pos, const Vec2& size = Vec2(0, 0));
+	void window(const char* title, const Vec2& pos, const Vec2& size);
+	void buildButton(BuildInfo&, const char* text, const Vec2& pos, const Vec2& size);
+
+	void startWave();
+	void doWave();
+	void spawnSoldier();
 
 private:
 	bool keepRunning{ true };
@@ -54,4 +69,22 @@ private:
 	Timer& timer;
 	Texture* guitexture{ nullptr };
 	Texture* sprites{ nullptr };
+	unsigned int mouseButtons{ 0 };
+	unsigned int mousePressed{ 0 };
+	unsigned int mouseReleased{ 0 };
+	int mouseX{ 0 };
+	int mouseY{ 0 };
+	int controlId{ 0 };
+	int activeControlId{ 0 };
+
+	const char* tooltip{ nullptr };
+
+	// Game state
+	float computingPower{ 0 };
+	float silicon{ 0 };
+
+	// Waves
+	int nextWaveLevel{ 0 };
+	double nextWaveTime{ 0 };
+	double waveEnd{ 0 };
 };

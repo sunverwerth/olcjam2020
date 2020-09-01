@@ -170,6 +170,7 @@
     <ClCompile Include="src\Timer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\AudioSource.h" />
     <ClInclude Include="src\AudioClip.h" />
     <ClInclude Include="src\AudioTrack.h" />
     <ClInclude Include="src\Game.h" />

@@ -25,13 +25,13 @@ SOFTWARE.
 #pragma once
 
 class Sfx;
-class AudioClip;
+class AudioSource;
 
 class AudioTrack {
 	friend class Sfx;
 public:
-	AudioTrack(AudioClip* clip, float volume, float pan, float pitch, bool loop):
-		clip(clip),
+	AudioTrack(AudioSource* source, float volume, float pan, float pitch, bool loop):
+		source(source),
 		volume(volume),
 		pan(pan),
 		pitch(pitch),
@@ -44,7 +44,7 @@ public:
 	void setPitch(float newPitch) { pitch = newPitch; }
 
 private:
-	AudioClip* clip;
+	AudioSource* source;
 	float volume;	
 	float pan;
 	float pitch;

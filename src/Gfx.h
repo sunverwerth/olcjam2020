@@ -58,11 +58,12 @@ public:
 	void bindTexture(Texture*);
 
 	void drawTexture(Texture* texture, const Vec2& pos, const Vec4& color = Vec4::WHITE);
-	void drawTextureClip(Texture* texture, const Vec2& clipPos, const Vec2& clipSize, const Vec2& pos, const Vec2& size, const Vec4& color = Vec4::WHITE);
+	void drawTextureClip(Texture* texture, const Vec2& clipPos, const Vec2& clipSize, const Vec2& pos, const Vec2& size, const Vec4& color = Vec4::WHITE, bool mirror = false);
 	void drawTextureSliced(Texture* texture, const Vec2& clipPos, const Vec2& clipSize, const Vec4& borders, const Vec2& pos, const Vec2& size, const Vec4& color = Vec4::WHITE);
 	void drawText(Texture* dont, const char* text, const Vec2& pos, const Vec4& color = Vec4::WHITE);
-	void drawSprite(const Sprite&, const Vec2& position, const Vec2& size, const Vec4& color = Vec4::WHITE);
-	void drawSprite(const Sprite&, const Vec2& position, const Vec4& color = Vec4::WHITE);
+	void drawSprite(const Sprite&, const Vec2& position, const Vec2& size, const Vec4& color = Vec4::WHITE, bool mirror = false);
+	void drawSprite(const Sprite&, const Vec2& position, const Vec4& color = Vec4::WHITE, bool mirror = false);
+	void drawRadialProgressIndicator(const Vec2& position, const Vec2& size, float progress, const Vec4& color = Vec4::WHITE);
 
 private:
 	void beginSprites(Texture* texture);
@@ -79,6 +80,7 @@ private:
 	// Sprite stuff
 	float pixelScale{ 1 };
 	Shader* spriteShader{ nullptr };
+	Shader* radialProgressShader{ nullptr };
 	Texture* currentSpriteTexture{ nullptr };
 	std::vector<SpriteVertex> spriteVertices;
 	Mesh* spriteMesh{ nullptr };

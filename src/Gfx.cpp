@@ -74,6 +74,7 @@ Gfx::Gfx(const char* title, int width, int height, bool fullscreen) {
 	textureUnits.resize(numTextureUnits);
 
 	spriteShader = new Shader("media/shaders/sprite_vs.glsl", "media/shaders/sprite_fs.glsl");
+	radialProgressShader = new Shader("media/shaders/sprite_vs.glsl", "media/shaders/radial_fs.glsl");
 
 	spriteMesh = new Mesh();
 }
@@ -150,12 +151,16 @@ void Gfx::drawTexture(Texture* texture, const Vec2& pos, const Vec4& color) {
 	spriteVertices.push_back({ pos * pixelScale + Vec2(0, h), {0, 0}, color });
 }
 
-void Gfx::drawTextureClip(Texture* texture, const Vec2& clipPos, const Vec2& clipSize, const Vec2& pos, const Vec2& size, const Vec4& color) {
+void Gfx::drawTextureClip(Texture* texture, const Vec2& clipPos, const Vec2& clipSize, const Vec2& pos, const Vec2& size, const Vec4& color, bool mirrored) {
 	if (currentSpriteTexture != texture) beginSprites(texture);
 	auto uv = clipPos / Vec2(texture->width(), texture->height());
 	uv.y = 1 - uv.y;
 	auto du = clipSize.x / texture->width();
 	auto dv = -clipSize.y / texture->height();
+	if (mirrored) {
+		uv.x += du;
+		du *= -1;
+	}
 	const float w = size.x * pixelScale;
 	const float h = size.y * pixelScale;
 	spriteVertices.push_back({ pos * pixelScale, uv, color });
@@ -201,15 +206,38 @@ void Gfx::drawText(Texture* font, const char* text, const Vec2& pos, const Vec4&
 	}
 }
 
-void Gfx::drawSprite(const Sprite& sprite, const Vec2& position, const Vec2& size, const Vec4& color) {
+void Gfx::drawSprite(const Sprite& sprite, const Vec2& position, const Vec2& size, const Vec4& color, bool mirrored) {
 	if (sprite.sliced) {
 		drawTextureSliced(sprite.texture, sprite.clipPosition, sprite.clipSize, sprite.borders, position, size, color);
 	}
 	else {
-		drawTextureClip(sprite.texture, sprite.clipPosition, sprite.clipSize, position, size, color);
+		drawTextureClip(sprite.texture, sprite.clipPosition, sprite.clipSize, position, size, color, mirrored);
 	}
 }
 
-void Gfx::drawSprite(const Sprite& sprite, const Vec2& position, const Vec4& color) {
-	drawSprite(sprite, position, sprite.clipSize, color);
+void Gfx::drawSprite(const Sprite& sprite, const Vec2& position, const Vec4& color, bool mirrored) {
+	drawSprite(sprite, position, sprite.clipSize, color, mirrored);
+}
+
+void Gfx::drawRadialProgressIndicator(const Vec2& position, const Vec2& size, float progress, const Vec4& color) {
+	endSprites();
+	spriteVertices.clear();
+
+	const float w = size.x * pixelScale;
+	const float h = size.y * pixelScale;
+	spriteVertices.push_back({ position * pixelScale, {0, 1}, color });
+	spriteVertices.push_back({ position * pixelScale + Vec2(w, 0), {1, 1}, color });
+	spriteVertices.push_back({ position * pixelScale + Vec2(w, h), {1, 0}, color });
+	spriteVertices.push_back({ position * pixelScale + Vec2(0, h), {0, 0}, color });
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	radialProgressShader->use();
+	radialProgressShader->uniform("screenSize", Vec2(width_, height_));
+	radialProgressShader->uniform("progress", progress);
+	spriteMesh->setVertices(spriteVertices.data(), sizeof(SpriteVertex), spriteVertices.size());
+	spriteMesh->bind();
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
+
+	spriteVertices.clear();
 }

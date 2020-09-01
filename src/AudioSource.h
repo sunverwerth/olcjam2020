@@ -24,22 +24,20 @@ SOFTWARE.
 
 #pragma once
 
-#include "AudioSource.h"
-
-class AudioClip: public AudioSource {
+class AudioSource {
 public:
-	AudioClip(const char* filename, int maxRef);
-	~AudioClip();
-
-	virtual int numSamples() const override { return numSamples_; }
-	virtual int numChannels() const override { return numChannels_; }
-	virtual int samplesPerSecond() const override { return samplesPerSecond_; }
-
-	virtual int render(float* buffer, int numSamples, int nextSample, float volume, float pan, float pitch, bool loop) override;
+	AudioSource(int maxRef): maxRef(maxRef) {}
+	virtual ~AudioSource() {}
+	virtual int render(float* buffer, int numSamples, int nextSample, float volume, float pan, float pitch, bool loop) = 0;
+	virtual int numSamples() const = 0;
+	virtual int numChannels() const = 0;
+	virtual int samplesPerSecond() const = 0;
+	void release() { refCount--; }
+	void addRef() { refCount++; }
+	int getRef() const { return refCount; }
+	int getMaxRef() const { return maxRef; }
 
 private:
-	int numSamples_{ 0 };
-	int numChannels_{ 0 };
-	int samplesPerSecond_{ 0 };
-	float* samples{ nullptr };
+	int refCount{ 0 };
+	int maxRef{ -1 };
 };

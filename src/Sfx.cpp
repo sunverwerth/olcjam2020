@@ -50,43 +50,47 @@ Sfx::~Sfx() {
 	SDL_CloseAudioDevice(device);
 }
 
-AudioClip* Sfx::getAudioClip(const char* filename) {
+AudioClip* Sfx::getAudioClip(const char* filename, int maxRef) {
 	auto it = audioClips.find(filename);
 	if (it != audioClips.end()) return it->second;
 
-	auto clip = new AudioClip(filename);
+	auto clip = new AudioClip(filename, maxRef);
 	audioClips[filename] = clip;
 	return clip;
 }
 
-AudioTrack* Sfx::play(AudioClip* clip, float volume, float pan, float pitch, bool loop) {
+AudioTrack* Sfx::play(AudioSource* clip, float volume, float pan, float pitch, bool loop) {
 	SDL_LockAudioDevice(device);
+	
 	AudioTrack* track = nullptr;
-	for (auto existingTrack : audioTracks) {
-		if (existingTrack->isFree()) {
-			track = existingTrack;
-			break;
+	if (clip->getMaxRef() <= 0 || clip->getRef() < clip->getMaxRef()) {
+		clip->addRef();
+		for (auto existingTrack : audioTracks) {
+			if (existingTrack->isFree()) {
+				track = existingTrack;
+				break;
+			}
 		}
-	}
 
-	if (!track) {
-		track = new AudioTrack(clip, volume, pan, pitch, loop);
-		audioTracks.push_back(track);
-	}
-	else {
-		track->clip = clip;
-		track->volume = volume;
-		track->pan = pan;
-		track->pitch = pitch;
-		track->loop = loop;
-		track->nextSample = 0;
+		if (!track) {
+			track = new AudioTrack(clip, volume, pan, pitch, loop);
+			audioTracks.push_back(track);
+		}
+		else {
+			track->source = clip;
+			track->volume = volume;
+			track->pan = pan;
+			track->pitch = pitch;
+			track->loop = loop;
+			track->nextSample = 0;
+		}
 	}
 
 	SDL_UnlockAudioDevice(device);
 	return track;
 }
 
-AudioTrack* Sfx::loop(AudioClip* clip, float volume, float pan, float pitch) {
+AudioTrack* Sfx::loop(AudioSource* clip, float volume, float pan, float pitch) {
 	return play(clip, volume, pan, pitch, true);
 }
 
@@ -98,7 +102,13 @@ void SDLCALL Sfx::audioCallback(void* userdata, unsigned char* stream, int len) 
 	auto numSamples = len / (sizeof(float) * self->spec.channels);
 
 	for (auto track : self->audioTracks) {
-		if (track->isFree()) continue;
+		if (track->isFree()) {
+			if (track->source) {
+				track->source->release();
+				track->source = nullptr;
+			}
+			continue;
+		}
 
 		track->render(samples, numSamples);
 	}

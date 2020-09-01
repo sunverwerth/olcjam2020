@@ -25,10 +25,13 @@ SOFTWARE.
 #include "AudioTrack.h"
 #include "AudioClip.h"
 #include <cstdlib>
+
 bool AudioTrack::isFree() const {
-	return !(loop || nextSample < clip->numSamples());
+	if (source == nullptr) return true;
+	if (!loop && nextSample >= source->numSamples()) return true;
+	return false;
 }
 
 void AudioTrack::render(float* buffer, int numSamples) {
-	nextSample = clip->render(buffer, numSamples, nextSample, volume, pan, pitch, loop);
+	nextSample = source->render(buffer, numSamples, nextSample, volume, pan, pitch, loop);
 }

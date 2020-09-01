@@ -27,7 +27,7 @@ SOFTWARE.
 #include <fstream>
 #include <cstdint>
 
-AudioClip::AudioClip(const char* filename) {
+AudioClip::AudioClip(const char* filename, int maxRef): AudioSource(maxRef) {
 	std::ifstream file(filename, std::ios::binary);
 	if (!file.good()) {
 		log_error("Can not open audio clip %s.", filename);

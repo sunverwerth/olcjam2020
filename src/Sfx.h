@@ -29,6 +29,7 @@ SOFTWARE.
 #include <string>
 #include <vector>
 
+class AudioSource;
 class AudioClip;
 class AudioTrack;
 
@@ -37,9 +38,9 @@ public:
 	Sfx();
 	~Sfx();
 
-	AudioClip* getAudioClip(const char* filename);
-	AudioTrack* play(AudioClip*, float volume = 1.0f, float pan = 0.0f, float pitch = 1.0f, bool loop = false);
-	AudioTrack* loop(AudioClip*, float volume = 1.0f, float pan = 0.0f, float pitch = 1.0f);
+	AudioClip* getAudioClip(const char* filename, int maxRef = -1);
+	AudioTrack* play(AudioSource*, float volume = 1.0f, float pan = 0.0f, float pitch = 1.0f, bool loop = false);
+	AudioTrack* loop(AudioSource*, float volume = 1.0f, float pan = 0.0f, float pitch = 1.0f);
 
 private:
 	static void SDLCALL audioCallback(void* userdata, unsigned char* stream, int len);
