@@ -31,40 +31,17 @@ SOFTWARE.
 #include "Texture.h"
 #include "AudioTrack.h"
 #include "AudioClip.h"
+#include "Unit.h"
+#include "utils.h"
+#include "Level.h"
+#include "Soldier.h"
+#include "Rocket.h"
+#include "Explosion.h"
+#include "Drone.h"
+
 #include <SDL2/SDL.h>
 #include <cmath>
 #include <sstream>
-
-int countNewlines(const char* text) {
-	int nl = 0;
-	char ch;
-	while (ch = *text++) {
-		if (ch == '\n') nl++;
-	}
-	return nl;
-}
-
-int longestLine(const char* text) {
-	int longest = 0;
-	int current = 0;
-	char ch;
-	while (ch = *text++) {
-		if (ch == '\n') current = 0;
-		current++;
-		if (current > longest) longest = current;
-	}
-	return longest;
-}
-
-float clamp(float  v, float  min, float  max) {
-	if (v < min) return min;
-	if (v > max) return max;
-	return v;
-}
-
-float frand(float min, float max) {
-	return min + (max - min) * rand() / RAND_MAX;
-}
 
 Vec2 mainCPUPosition;
 
@@ -73,14 +50,10 @@ Sprite sprite_bubble_tip;
 Sprite sprite_button;
 Sprite sprite_button_pressed;
 
-Sprite sprite_explosion[3];
-
 Sprite tiles[256];
 int numTiles;
-int selectedTile;
 
 Sprite structures[256];
-int selectedStructure;
 
 enum Structure {
 	STRUCTURE_WALL = 0,
@@ -141,83 +114,6 @@ BuildInfo droneBuildInfo{ false, 30, structures[STRUCTURE_DRONE_DEPLOYER] };
 
 BuildInfo* buildInfos[]{ &wallBuildInfo, &floorBuildInfo, &computeBuildInfo, &siliconBuildInfo, &droneBuildInfo };
 
-class Level {
-public:
-	Level(int width, int height);
-	~Level();
-
-	int width() const { return width_; }
-	int height() const { return height_; }
-
-	int getTile(int x, int y) const;
-	void setTile(int x, int y, int tile);
-	int getStructure(int x, int y) const;
-	void setStructure(int x, int y, int structure);
-
-	void load();
-	void save() const;
-
-private:
-	int width_;
-	int height_;
-	int* tiles;
-	int* structures;
-};
-
-#include <fstream>
-#include "sys.h"
-
-Level::Level(int width, int height) : width_(width), height_(height), tiles(new int[width * height]), structures(new int[width * height]) {
-	memset(tiles, 0, sizeof(int) * width * height);
-	memset(structures, -1, sizeof(int) * width * height);
-}
-
-Level::~Level() {
-	delete[] tiles;
-	delete[] structures;
-}
-
-int Level::getTile(int x, int y) const {
-	if (x < 0 || y < 0 || x >= width_ || y >= height_) return 0;
-	return tiles[y * width_ + x];
-}
-
-void Level::setTile(int x, int y, int tile) {
-	if (x < 0 || y < 0 || x >= width_ || y >= height_) return;
-
-	tiles[y * width_ + x] = tile;
-}
-
-int Level::getStructure(int x, int y) const {
-	if (x < 0 || y < 0 || x >= width_ || y >= height_) return 0;
-	return structures[y * width_ + x];
-}
-
-void Level::setStructure(int x, int y, int tile) {
-	if (x < 0 || y < 0 || x >= width_ || y >= height_) return;
-
-	structures[y * width_ + x] = tile;
-}
-
-void Level::load() {
-	std::ifstream file("media/level.dat");
-	if (!file.good()) {
-		log_error("Could not open level file for reading.");
-		return;
-	}
-	file.read(reinterpret_cast<char*>(tiles), sizeof(int) * width_ * height_);
-	file.read(reinterpret_cast<char*>(structures), sizeof(int) * width_ * height_);
-}
-
-void Level::save() const {
-	std::ofstream file("media/level.dat");
-	if (!file.good()) {
-		log_error("Could not open level file for writing.");
-		return;
-	}
-	file.write(reinterpret_cast<const char*>(tiles), sizeof(int) * width_ * height_);
-	file.write(reinterpret_cast<const char*>(structures), sizeof(int) * width_ * height_);
-}
 
 const int WAVE_DURATION = 30;
 const int WAVE_SPACING = 6;
@@ -227,89 +123,6 @@ Vec2 cameraPosition{ 500,500 };
 Vec2 cameraSpeed;
 
 bool moveUp, moveDown, moveLeft, moveRight;
-enum class UIMode {
-	GAME,
-	TILES,
-	STRUCTURES,
-} uiMode;
-
-Sprite sprite_rocket[4];
-Sprite sprite_drone;
-Sprite sprite_drone2;
-
-class Unit {
-public:
-	virtual ~Unit() {}
-	virtual void update(float dt, Sfx& sfx) = 0;
-	virtual void draw(Gfx& gfx) = 0;
-	virtual void takeExplosionDamage() = 0;
-	virtual bool isAlive() = 0;
-	bool inRadius(const Vec2& c, float r) {
-		return (c - pos).length() < r;
-	}
-
-public:
-	Vec2 pos;
-};
-
-Sprite sprite_soldier[6];
-
-class Soldier : public Unit {
-	enum State {
-		STAND,
-		RUN,
-		SHOOT,
-	};
-
-public:
-	virtual void update(float dt, Sfx& sfx) override {
-		time += dt;
-		if (time > 1) time = 0;
-		shoottime += dt;
-		if (shoottime > frand(2, 3)) shoottime = 0;
-
-		switch (state) {
-		case STAND:
-			target = mainCPUPosition;
-			state = RUN;
-			break;
-		case RUN:
-			pos += (target - pos).normalized() * 15 * dt;
-			if ((target - pos).length() < 32) state = SHOOT;
-			break;
-		case SHOOT:
-			if (shoottime == 0) sfx.play(sfx.getAudioClip("media/sounds/gun_burst.wav", 1), 0.5f, 0.0f, frand(0.9, 1.1));
-			break;
-		}
-	}
-
-	virtual void draw(Gfx& gfx) override {
-		int frame = 0;
-		switch (state) {
-		case STAND: frame = 5; break;
-		case RUN: frame = int(time * 8) % 4; break;
-		case SHOOT: frame = 4 + int(time * 16) % 2; break;
-		}		
-		gfx.drawSprite(sprite_soldier[frame], pos + Vec2(-5, -4) - round(cameraPosition), Vec4::WHITE, target.x > pos.x);
-	}
-
-	virtual void takeExplosionDamage() override {
-		alive = false;
-	}
-
-	virtual bool isAlive() override {
-		return alive;
-	}
-
-private:
-	bool alive{ true };
-	State state{ STAND };
-	Vec2 target;
-	float time{ 0 };
-	float shoottime{ 0 };
-};
-
-std::vector<Unit*> units;
 
 void Game::start() {
 	srand(SDL_GetTicks());
@@ -333,24 +146,24 @@ void Game::start() {
 		structures[i] = { sprites, Vec2(i * 32, 960), Vec2(32,64) };
 	}
 
-	sprite_soldier[0] = { sprites, Vec2(0, 475), Vec2(6, 5) };
-	sprite_soldier[1] = { sprites, Vec2(0, 480), Vec2(6, 5) };
-	sprite_soldier[2] = { sprites, Vec2(0, 485), Vec2(6, 5) };
-	sprite_soldier[3] = { sprites, Vec2(0, 490), Vec2(6, 5) };
-	sprite_soldier[4] = { sprites, Vec2(0, 495), Vec2(6, 5) };
-	sprite_soldier[5] = { sprites, Vec2(0, 500), Vec2(6, 5) };
+	Soldier::sprites[0] = { sprites, Vec2(0, 475), Vec2(6, 5) };
+	Soldier::sprites[1] = { sprites, Vec2(0, 480), Vec2(6, 5) };
+	Soldier::sprites[2] = { sprites, Vec2(0, 485), Vec2(6, 5) };
+	Soldier::sprites[3] = { sprites, Vec2(0, 490), Vec2(6, 5) };
+	Soldier::sprites[4] = { sprites, Vec2(0, 495), Vec2(6, 5) };
+	Soldier::sprites[5] = { sprites, Vec2(0, 500), Vec2(6, 5) };
 
-	sprite_rocket[0] = { sprites, Vec2(0,508),Vec2(8,4) };
-	sprite_rocket[1] = { sprites, Vec2(0,512),Vec2(8,4) };
-	sprite_rocket[2] = { sprites, Vec2(8,508),Vec2(4,8) };
-	sprite_rocket[3] = { sprites, Vec2(12,508),Vec2(4,8) };
+	Rocket::sprites[0] = { sprites, Vec2(0,508),Vec2(8,4) };
+	Rocket::sprites[1] = { sprites, Vec2(0,512),Vec2(8,4) };
+	Rocket::sprites[2] = { sprites, Vec2(8,508),Vec2(4,8) };
+	Rocket::sprites[3] = { sprites, Vec2(12,508),Vec2(4,8) };
 
-	sprite_drone = { sprites, Vec2(0,516),Vec2(8,8) };
-	sprite_drone2 = { sprites, Vec2(8,516),Vec2(8,8) };
+	Drone::sprites[0] = { sprites, Vec2(0,516),Vec2(8,8) };
+	Drone::sprites[1] = { sprites, Vec2(8,516),Vec2(8,8) };
 
-	sprite_explosion[0] = { sprites, Vec2(0,524),Vec2(32,32) };
-	sprite_explosion[1] = { sprites, Vec2(32,524),Vec2(32,32) };
-	sprite_explosion[2] = { sprites, Vec2(64,524),Vec2(32,32) };
+	Explosion::sprites[0] = { sprites, Vec2(0,524),Vec2(32,32) };
+	Explosion::sprites[1] = { sprites, Vec2(32,524),Vec2(32,32) };
+	Explosion::sprites[2] = { sprites, Vec2(64,524),Vec2(32,32) };
 
 	sprite_dust = { sprites, Vec2(500,500), Vec2(1,1) };
 	for (int i = 0; i < dustParticleCount; i++) {
@@ -370,14 +183,8 @@ void Game::start() {
 	}
 
 	nextWaveTime = timer.elapsedTime() + WAVE_SPACING;
-}
 
-void nextmode() {
-	switch (uiMode) {
-	case UIMode::GAME: uiMode = UIMode::TILES; break;
-	case UIMode::TILES: uiMode = UIMode::STRUCTURES; break;
-	case UIMode::STRUCTURES: uiMode = UIMode::GAME; break;
-	}
+	spawnDrone({ 700,100 });
 }
 
 void Game::handleEvent(const SDL_Event& event) {
@@ -394,17 +201,6 @@ void Game::handleEvent(const SDL_Event& event) {
 		case SDLK_d: moveRight = true; return;
 		case SDLK_w: moveUp = true; return;
 		case SDLK_s: moveDown = true; return;
-		case SDLK_TAB: nextmode(); return;
-		case SDLK_PLUS: {
-			if (uiMode == UIMode::TILES) selectedTile = (selectedTile + 1) % numTiles;
-			else if (uiMode == UIMode::STRUCTURES) selectedStructure = (selectedStructure + 1) % STRUCTURE_COUNT;
-			return;
-		}
-		case SDLK_MINUS: {
-			if (uiMode == UIMode::TILES) selectedTile = (selectedTile + numTiles - 1) % numTiles;
-			else if (uiMode == UIMode::STRUCTURES) selectedStructure = (selectedStructure + STRUCTURE_COUNT - 1) % STRUCTURE_COUNT;
-			return;
-		}
 		case SDLK_r: sprites->load(Image("media/textures/sprites.png")); return;
 		case SDLK_F5: level.save(); return;
 		}
@@ -441,76 +237,24 @@ bool Game::inViewport(const Vec2& pos) const {
 	return true;
 }
 
-struct Drone {
-	Vec2 speed;
-	Vec2 position;
-	Vec2 target;
-	float fireTime;
-	bool alive;
-};
-
-std::vector<Drone> drones;
-
 void Game::spawnDrone(const Vec2& pos) {
-	Drone* drone{ nullptr };
-	for (auto& d : drones) {
-		if (!d.alive) {
-			drone = &d;
-			break;
-		}
-	}
-	if (!drone) {
-		drones.push_back(Drone());
-		drone = &drones.back();
-	}
-	drone->alive = true;
-	drone->speed = Vec2(0, 0);
-	drone->position = pos;
-	drone->target = Vec2(frand(100, 1000), frand(100, 1000));
-	drone->fireTime = 0;
+	auto drone = new Drone(pos);
+	units.push_back(drone);
 }
-
-struct Rocket {
-	Vec2 position;
-	Vec2 target;
-	bool alive;
-	float speed;
-};
-
-std::vector<Rocket> rockets;
 
 void Game::spawnRocket(const Vec2& pos, const Vec2& target, float speed) {
 	float pan = clamp((pos.x - gfx.width() / gfx.getPixelScale() - cameraPosition.x) / gfx.width(), -0.5, 0.5);
 	sfx.play(sfx.getAudioClip("media/sounds/rocket.wav"), 0.1f, pan, frand(0.9, 1.1));
 
-	Rocket* rocket{ nullptr };
-	for (auto& r : rockets) {
-		if (!r.alive) {
-			rocket = &r;
-			break;
-		}
-	}
-	if (!rocket) {
-		rockets.push_back(Rocket());
-		rocket = &rockets.back();
-	}
-	rocket->alive = true;
-	rocket->position = pos;
-	rocket->target = target;
-	rocket->speed = speed;
+	auto rocket = new Rocket(pos, target, speed);
+	units.push_back(rocket);
 }
-
-struct Explosion {
-	Vec2 position;
-	float time;
-	bool alive;
-};
-
-std::vector<Explosion> explosions;
 
 void Game::spawnExplosion(const Vec2& pos) {
 	auto rpos = round(pos / 32);
-	level.setStructure(rpos.x, rpos.y, 13);
+	if (level.getStructure(rpos.x, rpos.y) == -1) {
+		level.setStructure(rpos.x, rpos.y, 13);
+	}
 
 	for (auto& unit : units) {
 		if (unit->inRadius(pos, 16)) {
@@ -521,25 +265,12 @@ void Game::spawnExplosion(const Vec2& pos) {
 	float pan = clamp((pos.x - gfx.width() / gfx.getPixelScale() - cameraPosition.x) / gfx.width(), -0.5, 0.5);
 	sfx.play(sfx.getAudioClip("media/sounds/explosion.wav"), 0.5f, pan, frand(0.5, 1.0));
 
-	Explosion* explosion{ nullptr };
-	for (auto& e : explosions) {
-		if (!e.alive) {
-			explosion = &e;
-			break;
-		}
-	}
-	if (!explosion) {
-		explosions.push_back(Explosion());
-		explosion = &explosions.back();
-	}
-	explosion->alive = true;
-	explosion->position = pos;
-	explosion->time = 0;
+	auto explosion = new Explosion(pos);
+	units.push_back(explosion);
 }
 
 void Game::spawnSoldier() {
-	auto soldier = new Soldier;
-	soldier->pos = mainCPUPosition + Vec2(frand(-1,1),frand(-1,1)).normalized() * 300;
+	auto soldier = new Soldier(mainCPUPosition + Vec2(frand(-1, 1), frand(-1, 1)).normalized() * 300);
 	units.push_back(soldier);
 }
 
@@ -582,8 +313,11 @@ void Game::prepareFrame() {
 	}
 
 	// units
+	auto workUnits = units;
+	for (auto& unit : workUnits) {
+		unit->update(dt, *this, sfx);
+	}
 	for (auto& unit : units) {
-		unit->update(dt, sfx);
 		if (!unit->isAlive()) {
 			delete unit;
 			unit = nullptr;
@@ -626,79 +360,9 @@ void Game::prepareFrame() {
 	}
 
 	// render units
-	for (auto& unit : units) {
+	auto drawunits = units;
+	for (auto& unit : drawunits) {
 		unit->draw(gfx);
-	}
-
-	// Render explosions
-	for (auto& expl : explosions) {
-		if (!expl.alive) continue;
-
-		int frame = expl.time * 8;
-		if (frame > 2) {
-			expl.alive = false;
-			continue;
-		}
-		expl.time += dt;
-
-		gfx.drawSprite(sprite_explosion[frame], expl.position - Vec2(16, 16) - round(cameraPosition));
-	}
-
-
-	// Render drones
-	for (auto& drone : drones) {
-		if (!drone.alive) continue;
-
-		if ((drone.position - drone.target).length() < 300 && t > drone.fireTime) {
-			drone.fireTime = t + 1;
-			spawnRocket(drone.position, drone.target, drone.speed.length());
-			if (units.size()) {
-				drone.target = units[rand() % units.size()]->pos;
-			}
-		}
-
-		drone.speed += (drone.target - drone.position).normalized() * 100 * dt;
-		if (drone.speed.length() > 100) drone.speed = drone.speed.normalized() * 100;
-		drone.position += drone.speed * dt;
-
-		float angle = atan2(drone.speed.x, drone.speed.y) * 180.0f / M_PI;
-		bool diag = (angle > -202.500000 && angle < -157.500000)
-			|| (angle > -112.500000 && angle < -67.500000)
-			|| (angle > -22.500000 && angle < 22.500000)
-			|| (angle > 67.500000 && angle < 112.500000);
-
-		gfx.drawSprite(diag ? sprite_drone : sprite_drone2, drone.position - round(cameraPosition));
-	}
-
-	// Render rockets
-	for (auto& rocket : rockets) {
-		if (!rocket.alive) continue;
-		rocket.speed += dt * 100;
-		if (rocket.speed > 300) rocket.speed = 300;
-		auto distance = rocket.target - rocket.position;
-		auto vel = distance.normalized() * rocket.speed;
-		rocket.position += vel * dt;
-		if (distance.length() < 10) {
-			rocket.alive = false;
-			spawnExplosion(rocket.position);
-		}
-		
-		if (abs(vel.x) > abs(vel.y)) {
-			if (vel.x > 0) {
-				gfx.drawSprite(sprite_rocket[1], rocket.position - round(cameraPosition));
-			}
-			else {
-				gfx.drawSprite(sprite_rocket[0], rocket.position - round(cameraPosition));
-			}
-		}
-		else {
-			if (vel.y > 0) {
-				gfx.drawSprite(sprite_rocket[3], rocket.position - round(cameraPosition));
-			}
-			else {
-				gfx.drawSprite(sprite_rocket[2], rocket.position - round(cameraPosition));
-			}
-		}
 	}
 
 	// Render dust
@@ -725,39 +389,6 @@ void Game::prepareFrame() {
 		Vec4 color = p.color;
 		color.w = p.time > 0.75f ? 1.0f - (p.time - 0.75f) * 4 : 1;
 		gfx.drawSprite(sprite_dust, p.pos - round(cameraPosition), color);
-	}
-
-	// Editor
-	if (uiMode == UIMode::TILES) {
-		gfx.drawText(guitexture, "Place tiles", Vec2(300, 0), Vec4::BLACK);
-		gfx.drawSprite(tiles[selectedTile], Vec2(0, 0));
-
-		int x = (mouseX / gfx.getPixelScale() + cameraPosition.x) / 32;
-		int y = (mouseY / gfx.getPixelScale() + cameraPosition.y) / 32;
-		gfx.drawSprite(tiles[selectedTile], Vec2(x * 32, y * 32) - round(cameraPosition));
-
-		if (mouseButtons & SDL_BUTTON(1)) {
-			level.setTile(x, y, selectedTile);
-		}
-	}
-	else if (uiMode == UIMode::STRUCTURES) {
-		gfx.drawText(guitexture, "Place structures", Vec2(300, 0), Vec4::BLACK);
-		gfx.drawSprite(structures[selectedStructure], Vec2(0, 0));
-
-		int x = (mouseX / gfx.getPixelScale() + cameraPosition.x) / 32;
-		int y = (mouseY / gfx.getPixelScale() + cameraPosition.y) / 32;
-		const Sprite& structure = structures[selectedStructure];
-		gfx.drawSprite(structure, Vec2(x * 32, y * 32 - structure.clipSize.y + 32) - round(cameraPosition));
-
-		if (mouseButtons & SDL_BUTTON(1)) {
-			if (level.getStructure(x, y) != selectedStructure) {
-				sfx.play(sfx.getAudioClip("media/sounds/thump.wav"));
-			}
-			level.setStructure(x, y, selectedStructure);
-		}
-		if (mouseButtons & SDL_BUTTON(3)) {
-			level.setStructure(x, y, -1);
-		}
 	}
 
 	// Hud

@@ -63,6 +63,7 @@ public:
 	void drawText(Texture* dont, const char* text, const Vec2& pos, const Vec4& color = Vec4::WHITE);
 	void drawSprite(const Sprite&, const Vec2& position, const Vec2& size, const Vec4& color = Vec4::WHITE, bool mirror = false);
 	void drawSprite(const Sprite&, const Vec2& position, const Vec4& color = Vec4::WHITE, bool mirror = false);
+	void drawRotatedSprite(const Sprite&, const Vec2& position, float angle, const Vec4& color = Vec4::WHITE, bool mirror = false);
 	void drawRadialProgressIndicator(const Vec2& position, const Vec2& size, float progress, const Vec4& color = Vec4::WHITE);
 
 private:

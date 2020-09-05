@@ -25,6 +25,7 @@ SOFTWARE.
 #pragma once
 
 #include "Vec2.h"
+#include <vector>
 
 union SDL_Event;
 class Gfx;
@@ -34,6 +35,7 @@ class Texture;
 struct DustParticle;
 struct Sprite;
 struct BuildInfo;
+class Unit;
 
 class Game {
 public:
@@ -62,6 +64,8 @@ public:
 	void doWave();
 	void spawnSoldier();
 
+	const std::vector<Unit*> getUnits() const { return units; }
+
 private:
 	bool keepRunning{ true };
 	Gfx& gfx;
@@ -87,4 +91,6 @@ private:
 	int nextWaveLevel{ 0 };
 	double nextWaveTime{ 0 };
 	double waveEnd{ 0 };
+
+	std::vector<Unit*> units;
 };

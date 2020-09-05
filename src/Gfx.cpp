@@ -219,6 +219,27 @@ void Gfx::drawSprite(const Sprite& sprite, const Vec2& position, const Vec4& col
 	drawSprite(sprite, position, sprite.clipSize, color, mirrored);
 }
 
+void Gfx::drawRotatedSprite(const Sprite& sprite, const Vec2& position, float angle, const Vec4& color, bool mirrored) {
+	if (currentSpriteTexture != sprite.texture) beginSprites(sprite.texture);
+	auto uv = sprite.clipPosition / Vec2(sprite.texture->width(), sprite.texture->height());
+	uv.y = 1 - uv.y;
+	auto du = sprite.clipSize.x / sprite.texture->width();
+	auto dv = -sprite.clipSize.y / sprite.texture->height();
+	if (mirrored) {
+		uv.x += du;
+		du *= -1;
+	}
+	const float w = sprite.clipSize.x * pixelScale / 2;
+	const float h = sprite.clipSize.y * pixelScale / 2;
+	auto dx = Vec2(cos(angle), sin(angle)) * w;
+	auto dy = Vec2(cos(angle + 3.14159f/2), sin(angle + 3.14159f / 2)) * h;
+	spriteVertices.push_back({ position * pixelScale - dx + dy, uv, color });
+	spriteVertices.push_back({ position * pixelScale + dx + dy, uv + Vec2(du, 0), color });
+	spriteVertices.push_back({ position * pixelScale + dx - dy, uv + Vec2(du, dv), color });
+	spriteVertices.push_back({ position * pixelScale - dx - dy, uv + Vec2(0, dv), color });
+}
+
+
 void Gfx::drawRadialProgressIndicator(const Vec2& position, const Vec2& size, float progress, const Vec4& color) {
 	endSprites();
 	spriteVertices.clear();
