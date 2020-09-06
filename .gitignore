@@ -2,6 +2,7 @@
 /Debug
 /Release
 /x64
+/build
 *.vcxproj.user
 *.vcxproj.filters
 *.cap

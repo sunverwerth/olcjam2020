@@ -26,12 +26,15 @@ SOFTWARE.
 #include "sys.h"
 #include <fstream>
 
-Level::Level(int width, int height) : width_(width), height_(height), tiles(new int[width * height]), structures(new int[width * height]) {
+std::vector<Unit*> emptyVector;
+
+Level::Level(int width, int height) : width_(width), height_(height), tiles(new int[width * height]), structures(new int[width * height]), unitsOnTile(new std::vector<Unit*>[width * height]) {
 	memset(tiles, 0, sizeof(int) * width * height);
 	memset(structures, -1, sizeof(int) * width * height);
 }
 
 Level::~Level() {
+	delete[] unitsOnTile;
 	delete[] tiles;
 	delete[] structures;
 }
@@ -56,6 +59,28 @@ void Level::setStructure(int x, int y, int tile) {
 	if (x < 0 || y < 0 || x >= width_ || y >= height_) return;
 
 	structures[y * width_ + x] = tile;
+}
+
+std::vector<Unit*>& Level::getUnits(int x, int y) const
+{
+	if (x < 0 || y < 0 || x >= width_ || y >= height_) return emptyVector;
+
+	return unitsOnTile[y * width_ + x];
+}
+
+void Level::addUnit(int x, int y, Unit* unit)
+{
+	if (x < 0 || y < 0 || x >= width_ || y >= height_) return;
+
+	unitsOnTile[y * width_ + x].push_back(unit);
+}
+
+void Level::removeUnit(int x, int y, Unit* unit)
+{
+	if (x < 0 || y < 0 || x >= width_ || y >= height_) return;
+
+	auto& vector = unitsOnTile[y * width_ + x];
+	vector.erase(std::find(vector.begin(), vector.end(), unit));
 }
 
 void Level::load() {

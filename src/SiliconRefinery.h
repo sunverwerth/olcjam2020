@@ -24,16 +24,24 @@ SOFTWARE.
 
 #pragma once
 
-#include "Vec2.h"
-#include "Vec4.h"
+#include "Unit.h"
+#include "Sprite.h"
 
-class Texture;
+class SiliconRefinery : public Unit {
+public:
+	SiliconRefinery(const Vec2& pos);
+	virtual void update(float dt, Game& game, Sfx& sfx) override;
+	virtual void draw_structure(Gfx& gfx) override;
+	virtual void draw_top(Gfx& gfx) override;
+	virtual void damage(DamageType) override;
+	virtual bool isSiliconRefinery() const override { return true; }
 
-struct Sprite {
-	Texture* texture;
-	Vec2 clipPosition;
-	Vec2 clipSize;
-	Vec2 offset;
-	bool sliced;
-	Vec4 borders;
+public:
+	static Sprite sprites[2];
+
+private:
+	float time{ 0 };
+	float damageTime{ 0 };
+	float health{ 100 };
+	float animSpeed;
 };

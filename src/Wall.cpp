@@ -22,38 +22,45 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "Rocket.h"
-#include "globals.h"
-#include "Gfx.h"
-#include "Game.h"
+#include "Wall.h"
 #include "utils.h"
+#include "Game.h"
+#include "Gfx.h"
+#include "globals.h"
+#include <algorithm>
 
-Sprite Rocket::sprite;
+Sprite Wall::sprites[2];
 
-void Rocket::update(float dt, Game& game, Sfx& sfx) {
-	speed += dt * 100;
-	if (speed > 300) speed = 300;
+Wall::Wall(const Vec2& pos) : Unit(pos) {
+	animSpeed = frand(1, 1.5);
+}
 
-	auto distance = target - pos;
-	auto vel = distance.normalized() * speed;
-	pos += vel * dt;
-
-	height = clamp(height - dt * 100, 8, 32);
-
-	if (distance.length() < 10) {
+void Wall::update(float dt, Game& game, Sfx& sfx) {
+	time += dt * animSpeed;
+	damageTime -= dt;
+	if (damageTime < 0) damageTime = 0;
+	if (health <= 0) {
+		game.spawnExplosion(pos + Vec2(16, 16));
 		alive = false;
-		game.spawnExplosion(pos);
 	}
 }
 
-void Rocket::draw_top(Gfx& gfx) {
-	auto distance = target - pos;
-	auto vel = distance.normalized() * speed;
-	gfx.drawRotatedSprite(sprite, pos - floor(cameraPosition) + Vec2(0, -height), atan2(vel.y, vel.x));
+void Wall::draw_structure(Gfx& gfx) {
+	int frame = int(time * 8) % 2;
+	gfx.drawSprite(sprites[frame], pos - floor(cameraPosition), Vec4(1 + damageTime, 1 + damageTime, 1, 1));
 }
 
-void Rocket::draw_bottom(Gfx& gfx) {
-	auto distance = target - pos;
-	auto vel = distance.normalized() * speed;
-	gfx.drawRotatedSprite(sprite, pos - floor(cameraPosition), atan2(vel.y, vel.x), Vec4(0, 0, 0, 0.5));
+void Wall::draw_top(Gfx& gfx) {
+	if (damageTime > 0) {
+		gfx.drawTextureClip(sprites[0].texture, Vec2(100, 100), Vec2(1, 1), pos - floor(cameraPosition) - Vec2(1, 11), Vec2(34, 4), Vec4::BLACK);
+		gfx.drawTextureClip(sprites[0].texture, Vec2(100, 100), Vec2(1, 1), pos - floor(cameraPosition) - Vec2(0, 10), Vec2(32 * health/100, 2), Vec4(0, 0.7, 0, 1));
+	}
+}
+
+void Wall::damage(DamageType type) {
+	switch (type) {
+	case DAMAGE_BULLET: health -= 1; break;
+	case DAMAGE_EXPLOSION: health -= 10; break;
+	}
+	damageTime = 0.5;
 }

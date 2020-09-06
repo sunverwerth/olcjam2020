@@ -113,6 +113,6 @@ struct Vec2 {
     float y;
 };
 
-inline Vec2 round(const Vec2& v) {
-    return Vec2(round(v.x), round(v.y));
+inline Vec2 floor(const Vec2& v) {
+    return Vec2(floor(v.x), floor(v.y));
 }

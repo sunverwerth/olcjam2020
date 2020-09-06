@@ -24,16 +24,17 @@ SOFTWARE.
 
 #pragma once
 
-#include "Vec2.h"
-#include "Vec4.h"
+#include "Unit.h"
+#include "Sprite.h"
 
-class Texture;
+class Crater : public Unit {
+public:
+	Crater(const Vec2& pos) : Unit(pos) {}
+	virtual void update(float dt, Game& game, Sfx& sfx) override;
+	virtual void draw_floor(Gfx& gfx) override;
+	virtual bool isCrater() const override { return true; }
 
-struct Sprite {
-	Texture* texture;
-	Vec2 clipPosition;
-	Vec2 clipSize;
-	Vec2 offset;
-	bool sliced;
-	Vec4 borders;
+public:
+	static Sprite sprite;
+	float time{ 0 };
 };

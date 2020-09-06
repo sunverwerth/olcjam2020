@@ -31,15 +31,14 @@ class Rocket: public Unit {
 public:
 	Rocket(const Vec2& pos, const Vec2& target, float speed): Unit(pos), target(target), speed(speed) {}
 	virtual void update(float dt, Game& game, Sfx& sfx) override;
-	virtual void draw(Gfx& gfx) override;
-	virtual void takeExplosionDamage() override;
-	virtual bool isAlive() override;
+	virtual void draw_top(Gfx& gfx) override;
+	virtual void draw_bottom(Gfx& gfx) override;
 
 public:
-	static Sprite sprites[4];
+	static Sprite sprite;
 
 private:
 	Vec2 target;
-	bool alive{ true };
 	float speed;
+	float height{ 32 };
 };

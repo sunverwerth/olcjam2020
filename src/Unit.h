@@ -30,20 +30,35 @@ class Sfx;
 class Gfx;
 class Game;
 
+enum DamageType {
+	DAMAGE_BULLET,
+	DAMAGE_EXPLOSION,
+	DAMAGE_EXPLOSION_SMALL,
+};
+
 class Unit {
 public:
 	Unit(const Vec2& pos) : pos(pos) {}
 	virtual ~Unit() {}
-	virtual void update(float dt, Game& game, Sfx& sfx) = 0;
-	virtual void draw(Gfx& gfx) = 0;
-	virtual void takeExplosionDamage() = 0;
-	virtual bool isAlive() = 0;
+	virtual void update(float dt, Game& game, Sfx& sfx) {};
+	virtual void draw_floor(Gfx& gfx) {};
+	virtual void draw_structure(Gfx& gfx) {};
+	virtual void draw_bottom(Gfx& gfx) {};
+	virtual void draw_top(Gfx& gfx) {};
+	virtual void damage(DamageType) {};
+	bool isAlive() const { return alive; }
 	bool inRadius(const Vec2& c, float r) {
 		return (c - pos).length() < r;
 	}
 
 	virtual bool isSoldier() const { return false; }
+	virtual bool isComputeCore() const { return false; }
+	virtual bool isWall() const { return false; }
+	virtual bool isDroneDeployer() const { return false; }
+	virtual bool isSiliconRefinery() const { return false; }
+	virtual bool isCrater() const { return false; }
 
 public:
 	Vec2 pos;
+	bool alive{ true };
 };

@@ -24,16 +24,23 @@ SOFTWARE.
 
 #pragma once
 
-#include "Vec2.h"
-#include "Vec4.h"
+#include "Unit.h"
+#include "Sprite.h"
 
-class Texture;
+class Jet: public Unit {
+public:
+	Jet(const Vec2& pos, const Vec2& dir, float speed): Unit(pos), dir(dir), speed(speed) {}
+	virtual void update(float dt, Game& game, Sfx& sfx) override;
+	virtual void draw_top(Gfx& gfx) override;
+	virtual void draw_bottom(Gfx& gfx) override;
 
-struct Sprite {
-	Texture* texture;
-	Vec2 clipPosition;
-	Vec2 clipSize;
-	Vec2 offset;
-	bool sliced;
-	Vec4 borders;
+public:
+	static Sprite sprites[2];
+
+public:
+	Vec2 dir;
+	Vec2 target;
+	float speed;
+	float drop{ 0 };
+	float time{ 0 };
 };

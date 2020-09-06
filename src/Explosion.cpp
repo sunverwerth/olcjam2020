@@ -32,20 +32,12 @@ void Explosion::update(float dt, Game& game, Sfx& sfx) {
 	time += dt;
 }
 
-void Explosion::draw(Gfx& gfx) {
+void Explosion::draw_top(Gfx& gfx) {
 	int frame = time * 8;
 	if (frame > 2) {
 		alive = false;
 		return;
 	}
 
-	gfx.drawSprite(sprites[frame], pos - Vec2(16, 16) - round(cameraPosition));
-}
-
-void Explosion::takeExplosionDamage() {
-	// nope
-}
-
-bool Explosion::isAlive() {
-    return alive;
+	gfx.drawSprite(sprites[frame], pos - Vec2(16, 16) - floor(cameraPosition));
 }

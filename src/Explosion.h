@@ -31,14 +31,11 @@ class Explosion : public Unit {
 public:
 	Explosion(const Vec2& pos) : Unit(pos) {}
 	virtual void update(float dt, Game& game, Sfx& sfx) override;
-	virtual void draw(Gfx& gfx) override;
-	virtual void takeExplosionDamage() override;
-	virtual bool isAlive() override;
+	virtual void draw_top(Gfx& gfx) override;
 
 public:
 	static Sprite sprites[3];
 
 private:
-	bool alive{ true };
 	float time{ 0 };
 };

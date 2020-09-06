@@ -35,18 +35,21 @@ class Soldier : public Unit {
 public:
 	Soldier(const Vec2& pos) : Unit(pos) {}
 	virtual void update(float dt, Game& game, Sfx& sfx) override;
-	virtual void draw(Gfx& gfx) override;
-	virtual void takeExplosionDamage() override;
-	virtual bool isAlive() override;
+	virtual void draw_bottom(Gfx& gfx) override;
+	virtual void damage(DamageType) override;
 	virtual bool isSoldier() const override { return true; }
+
+private:
+	void findTarget(Game&);
 
 public:
 	static Sprite sprites[6];
+	bool grenadier{ false };
 
 private:
-	bool alive{ true };
 	State state{ STAND };
-	Vec2 target{ 0, 0 };
 	float time{ 0 };
 	float shoottime{ 0 };
+	Unit* target{ nullptr };
+	bool mirrored;
 };

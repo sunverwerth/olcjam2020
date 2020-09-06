@@ -22,18 +22,40 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#pragma once
+#include "Jet.h"
+#include "globals.h"
+#include "Gfx.h"
+#include "Game.h"
+#include "utils.h"
+#include "Grenade.h"
 
-#include "Vec2.h"
-#include "Vec4.h"
+Sprite Jet::sprites[2];
 
-class Texture;
+void Jet::update(float dt, Game& game, Sfx& sfx) {
+	speed += dt * 100;
+	if (speed > 200) speed = 200;
 
-struct Sprite {
-	Texture* texture;
-	Vec2 clipPosition;
-	Vec2 clipSize;
-	Vec2 offset;
-	bool sliced;
-	Vec4 borders;
-};
+	time += dt;
+
+	pos += dir * speed * dt;
+	drop -= dt;
+	if ((pos-target).length() < 150 && drop < 0) {
+		drop = frand(0.05, 0.1);
+		auto grenade = game.spawnGrenade(pos, pos);
+		grenade->time = 0.5f;
+	}
+
+	if (pos.x < 0 || pos.y < 0 || pos.x > 3000 || pos.y > 3000) {
+		alive = false;
+	}
+}
+
+void Jet::draw_top(Gfx& gfx) {
+	int frame = int(time * 10) % 2;
+	gfx.drawRotatedSprite(sprites[frame], pos - floor(cameraPosition) + Vec2(0, -32), atan2(dir.y, dir.x));
+}
+
+void Jet::draw_bottom(Gfx& gfx) {
+	int frame = int(time * 10) % 2;
+	gfx.drawRotatedSprite(sprites[frame], pos - floor(cameraPosition), atan2(dir.y, dir.x), Vec4(0, 0, 0, 0.5f));
+}

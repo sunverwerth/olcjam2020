@@ -23,47 +23,78 @@ SOFTWARE.
 #include "Soldier.h"
 #include "utils.h"
 #include "globals.h"
+#include "Game.h"
 #include "Gfx.h"
 #include "Sfx.h"
 #include "AudioClip.h"
 
 Sprite Soldier::sprites[6];
 
+void Soldier::findTarget(Game& game) {
+	target = nullptr;
+	float distance = 9999999999;
+	for (auto unit : game.getUnits()) {
+		if ((unit->isComputeCore() || unit->isWall() || unit->isDroneDeployer() || unit->isSiliconRefinery()) && (!target || ((unit->pos - pos).squaredLength() < distance))) {
+			target = unit;
+			distance = (unit->pos - pos).squaredLength();
+		}
+	}
+}
+
 void Soldier::update(float dt, Game& game, Sfx& sfx) {
 	time += dt;
 	if (time > 1) time = 0;
-	shoottime += dt;
-	if (shoottime > frand(2, 3)) shoottime = 0;
+	shoottime -= dt;
 
 	switch (state) {
 	case STAND:
-		target = mainCPUPosition;
-		state = RUN;
+		findTarget(game);
+		if (target) state = RUN;
 		break;
 	case RUN:
-		pos += (target - pos).normalized() * 15 * dt;
-		if ((target - pos).length() < 32) state = SHOOT;
+		if (!target->isAlive()) {
+			target = nullptr;
+			state = STAND;
+			break;
+		}
+		auto tpos = target->pos + Vec2(16, 16);
+		auto vel = (tpos - pos).normalized() * 15;
+		mirrored = vel.x > 0;
+		auto newpos = pos + vel * dt;
+		pos = newpos;
+		if ((tpos - pos).length() < 32) state = SHOOT;
 		break;
 	case SHOOT:
-		if (shoottime == 0) sfx.play(sfx.getAudioClip("media/sounds/gun_burst.wav", 1), 0.5f, 0.0f, frand(0.9, 1.1));
+		if (!target->isAlive()) {
+			target = nullptr;
+			state = STAND;
+			break;
+		}
+		if (shoottime < 0) {
+			if (grenadier) {
+				game.spawnGrenade(pos, target->pos + Vec2(16, 16));
+				shoottime = frand(2, 4);
+			}
+			else {
+				target->damage(DAMAGE_BULLET);
+				sfx.play(sfx.getAudioClip("media/sounds/gun_burst.wav", 2), 0.5f, 0.0f, frand(0.9, 1.1));
+				shoottime = frand(1, 3);
+			}
+		}
 		break;
 	}
 }
 
-void Soldier::draw(Gfx& gfx) {
+void Soldier::draw_bottom(Gfx& gfx) {
 	int frame = 0;
 	switch (state) {
 	case STAND: frame = 5; break;
 	case RUN: frame = int(time * 8) % 4; break;
-	case SHOOT: frame = 4 + int(time * 16) % 2; break;
+	case SHOOT: frame = shoottime < 0.5f ? 4 + int(time * 16) % 2 : 5; break;
 	}
-	gfx.drawSprite(sprites[frame], pos + Vec2(-5, -4) - round(cameraPosition), Vec4::WHITE, target.x > pos.x);
+	gfx.drawSprite(sprites[frame], pos + Vec2(-5, -4) - floor(cameraPosition), Vec4::WHITE, mirrored);
 }
 
-void Soldier::takeExplosionDamage() {
+void Soldier::damage(DamageType) {
 	alive = false;
-}
-
-bool Soldier::isAlive() {
-	return alive;
 }

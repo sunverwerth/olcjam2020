@@ -211,7 +211,7 @@ void Gfx::drawSprite(const Sprite& sprite, const Vec2& position, const Vec2& siz
 		drawTextureSliced(sprite.texture, sprite.clipPosition, sprite.clipSize, sprite.borders, position, size, color);
 	}
 	else {
-		drawTextureClip(sprite.texture, sprite.clipPosition, sprite.clipSize, position, size, color, mirrored);
+		drawTextureClip(sprite.texture, sprite.clipPosition, sprite.clipSize, position + sprite.offset, size, color, mirrored);
 	}
 }
 
@@ -232,11 +232,11 @@ void Gfx::drawRotatedSprite(const Sprite& sprite, const Vec2& position, float an
 	const float w = sprite.clipSize.x * pixelScale / 2;
 	const float h = sprite.clipSize.y * pixelScale / 2;
 	auto dx = Vec2(cos(angle), sin(angle)) * w;
-	auto dy = Vec2(cos(angle + 3.14159f/2), sin(angle + 3.14159f / 2)) * h;
-	spriteVertices.push_back({ position * pixelScale - dx + dy, uv, color });
-	spriteVertices.push_back({ position * pixelScale + dx + dy, uv + Vec2(du, 0), color });
-	spriteVertices.push_back({ position * pixelScale + dx - dy, uv + Vec2(du, dv), color });
-	spriteVertices.push_back({ position * pixelScale - dx - dy, uv + Vec2(0, dv), color });
+	auto dy = Vec2(-sin(angle), cos(angle)) * h;
+	spriteVertices.push_back({ position * pixelScale - dx - dy, uv, color });
+	spriteVertices.push_back({ position * pixelScale + dx - dy, uv + Vec2(du, 0), color });
+	spriteVertices.push_back({ position * pixelScale + dx + dy, uv + Vec2(du, dv), color });
+	spriteVertices.push_back({ position * pixelScale - dx + dy, uv + Vec2(0, dv), color });
 }
 
 

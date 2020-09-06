@@ -24,16 +24,21 @@ SOFTWARE.
 
 #pragma once
 
-#include "Vec2.h"
-#include "Vec4.h"
+#include "Unit.h"
+#include "Sprite.h"
 
-class Texture;
+class Grenade: public Unit {
+public:
+	Grenade(const Vec2& pos, const Vec2& target);
+	virtual void update(float dt, Game& game, Sfx& sfx) override;
+	virtual void draw_top(Gfx& gfx) override;
+	virtual void draw_bottom(Gfx& gfx) override;
 
-struct Sprite {
-	Texture* texture;
-	Vec2 clipPosition;
-	Vec2 clipSize;
-	Vec2 offset;
-	bool sliced;
-	Vec4 borders;
+public:
+	static Sprite sprite;
+
+public:
+	float rotation;
+	float time{ 0 };
+	Vec2 target;
 };

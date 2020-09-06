@@ -22,18 +22,21 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#pragma once
+#include "Crater.h"
+#include "globals.h"
+#include "Gfx.h"
+#include "Game.h"
+#include "utils.h"
 
-#include "Vec2.h"
-#include "Vec4.h"
+Sprite Crater::sprite;
 
-class Texture;
+void Crater::update(float dt, Game& game, Sfx& sfx) {
+	time += dt;
+	if (time > 5) {
+		alive = false;
+	}
+}
 
-struct Sprite {
-	Texture* texture;
-	Vec2 clipPosition;
-	Vec2 clipSize;
-	Vec2 offset;
-	bool sliced;
-	Vec4 borders;
-};
+void Crater::draw_floor(Gfx& gfx) {
+	gfx.drawSprite(sprite, pos - floor(cameraPosition), Vec4(1, 1, 1, 1 - time * 0.2));
+}

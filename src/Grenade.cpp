@@ -22,18 +22,29 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#pragma once
+#include "Grenade.h"
+#include "globals.h"
+#include "Gfx.h"
+#include "Game.h"
+#include "utils.h"
 
-#include "Vec2.h"
-#include "Vec4.h"
+Sprite Grenade::sprite;
 
-class Texture;
+Grenade::Grenade(const Vec2& pos, const Vec2& target) : Unit(pos), target(target), rotation(frand(-20, 20)) {}
 
-struct Sprite {
-	Texture* texture;
-	Vec2 clipPosition;
-	Vec2 clipSize;
-	Vec2 offset;
-	bool sliced;
-	Vec4 borders;
-};
+void Grenade::update(float dt, Game& game, Sfx& sfx) {
+	time += dt;
+	if (time > 1) {
+		alive = false;
+		game.spawnExplosion(target, true);
+	}
+}
+
+void Grenade::draw_top(Gfx& gfx) {
+	float height = sin(time * 3.14159) * 16;
+	gfx.drawRotatedSprite(sprite, pos + (target - pos) * time - floor(cameraPosition) + Vec2(0, height), time * rotation);
+}
+
+void Grenade::draw_bottom(Gfx& gfx) {
+	gfx.drawRotatedSprite(sprite, pos + (target - pos) * time - floor(cameraPosition), time * rotation, Vec4(0, 0, 0, 0.5));
+}

@@ -35,7 +35,9 @@ class Texture;
 struct DustParticle;
 struct Sprite;
 struct BuildInfo;
+class Drone;
 class Unit;
+class Grenade;
 
 class Game {
 public:
@@ -43,14 +45,16 @@ public:
 	void start();
 	void handleEvent(const SDL_Event&);
 	bool shouldKeepRunning() const { return keepRunning; }
-	void prepareFrame();
+	void update();
+	void drawFrame();
 	void bubble(const char* text, const Vec2& pos, const Vec2& tippos);
 	void createParticle(DustParticle& p);
 	bool inViewport(const Vec2& pos) const;
 	void anyKeyPressed();
 	void spawnRocket(const Vec2& pos, const Vec2& target, float speed);
-	void spawnDrone(const Vec2& pos);
-	void spawnExplosion(const Vec2& pos);
+	Grenade* spawnGrenade(const Vec2& pos, const Vec2& target);
+	Drone* spawnDrone(const Vec2& pos);
+	void spawnExplosion(const Vec2& pos, bool small = false);
 	void prepareGUI();
 
 	bool isMouseOver(const Vec2& pos, const Vec2& size);
@@ -63,8 +67,18 @@ public:
 	void startWave();
 	void doWave();
 	void spawnSoldier();
+	template<typename T> T* spawn(const Vec2& pos) {
+		auto unit = new T(pos);
+		units.push_back(unit);
+		addUnit(unit, pos);
+		return unit;
+	}
 
-	const std::vector<Unit*> getUnits() const { return units; }
+	const std::vector<Unit*>& getUnits() const { return units; }
+
+	void addUnit(Unit* unit, const Vec2& pos);
+	void removeUnit(Unit* unit, const Vec2& pos);
+	void moveUnit(Unit* unit, const Vec2& from, const Vec2& to);
 
 private:
 	bool keepRunning{ true };
@@ -85,7 +99,8 @@ private:
 
 	// Game state
 	float computingPower{ 0 };
-	float silicon{ 0 };
+	float silicon{ 500 };
+	float siliconPerSecond{ 0 };
 
 	// Waves
 	int nextWaveLevel{ 0 };
@@ -93,4 +108,8 @@ private:
 	double waveEnd{ 0 };
 
 	std::vector<Unit*> units;
+
+	BuildInfo* selectedBuildInfo{ nullptr };
+
+	bool splash{ true };
 };

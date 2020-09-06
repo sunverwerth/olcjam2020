@@ -24,6 +24,10 @@ SOFTWARE.
 
 #pragma once
 
+#include <vector>
+
+class Unit;
+
 class Level {
 public:
 	Level(int width, int height);
@@ -36,6 +40,9 @@ public:
 	void setTile(int x, int y, int tile);
 	int getStructure(int x, int y) const;
 	void setStructure(int x, int y, int structure);
+	std::vector<Unit*>& getUnits(int x, int y) const;
+	void addUnit(int x, int y, Unit* unit);
+	void removeUnit(int x, int y, Unit* unit);
 
 	void load();
 	void save() const;
@@ -45,5 +52,6 @@ private:
 	int height_;
 	int* tiles;
 	int* structures;
+	std::vector<Unit*>* unitsOnTile;
 };
 

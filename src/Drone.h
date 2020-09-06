@@ -27,20 +27,31 @@ SOFTWARE.
 #include "Unit.h"
 #include "Sprite.h"
 
+class DroneDeployer;
+
 class Drone : public Unit {
+	enum State {
+		WAIT,
+		START,
+		ATTACK,
+		RETURN,
+		LAND
+	};
 public:
 	Drone(const Vec2& pos);
 	virtual void update(float dt, Game& game, Sfx& sfx) override;
-	virtual void draw(Gfx& gfx) override;
-	virtual void takeExplosionDamage() override;
-	virtual bool isAlive() override;
+	virtual void draw_top(Gfx& gfx) override;
+	virtual void draw_bottom(Gfx& gfx) override;
 
 public:
-	static Sprite sprites[2];
+	static Sprite sprite;
 
-private:
-	bool alive{ true };
+public:
 	Vec2 speed{ 0,0 };
-	Vec2 target{ 0,0 };
+	Unit* target{ nullptr };
 	float fireTime{ 0 };
+	DroneDeployer* origin{ nullptr };
+	int numRockets{ 1 };
+	float height{ 0 };
+	State state{ START };
 };
