@@ -33,8 +33,9 @@ public:
 	virtual void update(float dt, Game& game, Sfx& sfx) override;
 	virtual void draw_structure(Gfx& gfx) override;
 	virtual void draw_top(Gfx& gfx) override;
-	virtual void damage(DamageType) override;
+	virtual void damage(int amount, Faction originator) override;
 	virtual bool isWall() const override { return true; }
+	virtual void heal(float amount) override;
 
 public:
 	static Sprite sprites[2];
@@ -42,6 +43,6 @@ public:
 private:
 	float time{ 0 };
 	float damageTime{ 0 };
-	float health{ 100 };
+	float healTime{ 0 };
 	float animSpeed;
 };

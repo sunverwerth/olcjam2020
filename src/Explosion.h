@@ -29,7 +29,7 @@ SOFTWARE.
 
 class Explosion : public Unit {
 public:
-	Explosion(const Vec2& pos) : Unit(pos) {}
+	Explosion(const Vec2& pos) : Unit(pos, 0) {}
 	virtual void update(float dt, Game& game, Sfx& sfx) override;
 	virtual void draw_top(Gfx& gfx) override;
 

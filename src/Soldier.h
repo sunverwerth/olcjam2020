@@ -33,10 +33,10 @@ class Soldier : public Unit {
 	};
 
 public:
-	Soldier(const Vec2& pos) : Unit(pos) {}
+	Soldier(const Vec2& pos) : Unit(pos, 100) {}
 	virtual void update(float dt, Game& game, Sfx& sfx) override;
 	virtual void draw_bottom(Gfx& gfx) override;
-	virtual void damage(DamageType) override;
+	virtual void damage(int amount, Faction originator) override;
 	virtual bool isSoldier() const override { return true; }
 
 private:

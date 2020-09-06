@@ -26,6 +26,7 @@ SOFTWARE.
 
 #include "Vec2.h"
 #include <vector>
+#include "Unit.h"
 
 union SDL_Event;
 class Gfx;
@@ -51,10 +52,10 @@ public:
 	void createParticle(DustParticle& p);
 	bool inViewport(const Vec2& pos) const;
 	void anyKeyPressed();
-	void spawnRocket(const Vec2& pos, const Vec2& target, float speed);
-	Grenade* spawnGrenade(const Vec2& pos, const Vec2& target);
-	Drone* spawnDrone(const Vec2& pos);
-	void spawnExplosion(const Vec2& pos, bool small = false);
+	void spawnRocket(const Vec2& pos, const Vec2& target, float speed, Faction faction);
+	Grenade* spawnGrenade(const Vec2& pos, const Vec2& target, Faction faction);
+	Drone* spawnDrone(const Vec2& pos, bool repair);
+	void spawnExplosion(const Vec2& pos, bool small, Faction faction);
 	void prepareGUI();
 
 	bool isMouseOver(const Vec2& pos, const Vec2& size);
@@ -62,7 +63,7 @@ public:
 	bool button(const char* text, const Vec2& pos, const Vec2& size = Vec2(0, 0));
 	bool button(const Sprite& sprite, const char* tooltip, const Vec2& pos, const Vec2& size = Vec2(0, 0));
 	void window(const char* title, const Vec2& pos, const Vec2& size);
-	void buildButton(BuildInfo&, const char* text, const Vec2& pos, const Vec2& size);
+	void buildButton(BuildInfo&, const Vec2& pos, const Vec2& size);
 
 	void startWave();
 	void doWave();
@@ -80,7 +81,7 @@ public:
 	void removeUnit(Unit* unit, const Vec2& pos);
 	void moveUnit(Unit* unit, const Vec2& from, const Vec2& to);
 
-private:
+public:
 	bool keepRunning{ true };
 	Gfx& gfx;
 	Sfx& sfx;
@@ -95,11 +96,9 @@ private:
 	int controlId{ 0 };
 	int activeControlId{ 0 };
 
-	const char* tooltip{ nullptr };
-
 	// Game state
 	float computingPower{ 0 };
-	float silicon{ 500 };
+	float silicon{ 5000 };
 	float siliconPerSecond{ 0 };
 
 	// Waves

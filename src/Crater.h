@@ -29,7 +29,7 @@ SOFTWARE.
 
 class Crater : public Unit {
 public:
-	Crater(const Vec2& pos) : Unit(pos) {}
+	Crater(const Vec2& pos) : Unit(pos, 0) {}
 	virtual void update(float dt, Game& game, Sfx& sfx) override;
 	virtual void draw_floor(Gfx& gfx) override;
 	virtual bool isCrater() const override { return true; }

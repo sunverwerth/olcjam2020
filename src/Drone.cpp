@@ -32,27 +32,130 @@ SOFTWARE.
 
 Sprite Drone::sprite;
 
-Drone::Drone(const Vec2& pos) : Unit(pos), target(nullptr) {
+Drone::Drone(const Vec2& pos) : Unit(pos, 0), target(nullptr) {
+}
+
+void Drone::selfdestruct(Game& game) {
+	alive = false;
+	game.spawnExplosion(pos, false, Faction::Player);
 }
 
 void Drone::update(float dt, Game& game, Sfx& sfx) {
-	fireTime -= dt;
 	if (target && !target->alive) target = nullptr;
 	if (origin && !origin->alive) origin = nullptr;
 
+	if (!origin) {
+		selfdestruct(game);
+		return;
+	}
+
+	fireTime -= dt;
+	
+	speed *= pow(0.5f, dt * 0.1);
+
+	if (repair) updateRepair(dt, game, sfx);
+	else updateAttack(dt, game, sfx);
+}
+
+void Drone::updateRepair(float dt, Game& game, Sfx& sfx) {
 	switch (state) {
 	case WAIT:
-		if (!origin) {
-			alive = false;
-			game.spawnExplosion(pos);
-			break;
-		}
 		if (target) {
 			state = START;
 			origin->numDrones--;
 			break;
 		}
 		break;
+
+	case START:
+		height += dt * 20;
+		if (height > 32) {
+			height = 32;
+			state = REPAIR;
+			speed = Vec2(frand(-5, 5), frand(-5, 5));
+		}
+		break;
+
+	case REPAIR:
+		if (target && target->isAlive()) {
+			if ((pos - target->pos).length() < 64 && fireTime < 0) {
+				fireTime = 0.5;
+				target->heal(3);
+				healthpoints -= 3;
+				if (healthpoints < 0) {
+					target = nullptr;
+					state = RETURN;
+					break;
+				}
+				if (target->hasFullHealth()) {
+					target = nullptr;
+					break;
+				}
+			}
+
+			if (target) {
+				speed += (target->pos - pos).normalized() * 100 * dt;
+				if (speed.length() > 100) speed = speed.normalized() * 100;
+				pos += speed * dt;
+			}
+		}
+		else {
+			target = nullptr;
+			float mindist = 9999999999;
+			for (auto building : game.getUnits()) {
+				float dsq = (building->pos - pos).squaredLength();
+				if (building->isPlayerStructure() && !building->hasFullHealth() && (pos - building->pos).length() < 300 && dsq < mindist) {
+					target = building;
+					mindist = dsq;
+				}
+			}
+			if (!target) state = RETURN;
+		}
+		break;
+
+	case RETURN: {
+		if ((pos - origin->pos - Vec2(16, 16)).length() < 4) {
+			pos = origin->pos + Vec2(16, 16);
+			speed = Vec2(0, 0);
+			state = LAND;
+			break;
+		}
+
+		speed += (origin->pos + Vec2(16, 16) - pos).normalized() * 100 * dt;
+		if (speed.length() > 100) speed = speed.normalized() * 100;
+		pos += speed * dt;
+
+		auto homedir = origin->pos + Vec2(16, 16) - pos;
+		float homedist = homedir.length();
+		auto homenorm = homedir / homedist;
+		if (homedist < 100) {
+			speed = homenorm * homedist;
+		}
+	}
+	break;
+
+	case LAND:
+		height -= dt * 20;
+		if (height < 0) {
+			healthpoints = 100;
+			height = 0;
+			origin->numDrones++;
+			state = WAIT;
+		}
+		break;
+	}
+}
+
+void Drone::updateAttack(float dt, Game& game, Sfx& sfx) {
+	switch (state) {
+	case WAIT:
+		if (target) {
+			state = START;
+			origin->numDrones--;
+			break;
+		}
+		break;
+
 	case START:
 		height += dt * 20;
 		if (height > 32) {
@@ -66,7 +169,7 @@ void Drone::update(float dt, Game& game, Sfx& sfx) {
 		if (target) {
 			if ((pos - target->pos).length() < 64 && fireTime <= 0) {
 				fireTime = 1;
-				game.spawnRocket(pos, target->pos, speed.length());
+				game.spawnRocket(pos, target->pos, speed.length(), Faction::Player);
 				numRockets--;
 				state = RETURN;
 				break;
@@ -87,40 +190,33 @@ void Drone::update(float dt, Game& game, Sfx& sfx) {
 		}
 		break;
 
-	case RETURN:
-		if (origin) {
-			if ((pos - origin->pos - Vec2(16, 16)).length() < 4) {
-				pos = origin->pos + Vec2(16, 16);
-				speed = Vec2(0, 0);
-				state = LAND;
-				break;
-			}
-
-			speed += (origin->pos + Vec2(16, 16) - pos).normalized() * 100 * dt;
-			if (speed.length() > 100) speed = speed.normalized() * 100;
-			pos += speed * dt;
-
-			auto homedir = origin->pos + Vec2(16, 16) - pos;
-			float homedist = homedir.length();
-			auto homenorm = homedir / homedist;
-			if (homedist < 100) {
-				speed = homenorm * homedist;
-			}
+	case RETURN: {
+		if ((pos - origin->pos - Vec2(16, 16)).length() < 4) {
+			pos = origin->pos + Vec2(16, 16);
+			speed = Vec2(0, 0);
+			state = LAND;
+			break;
 		}
-		break;
+
+		speed += (origin->pos + Vec2(16, 16) - pos).normalized() * 100 * dt;
+		if (speed.length() > 100) speed = speed.normalized() * 100;
+		pos += speed * dt;
+
+		auto homedir = origin->pos + Vec2(16, 16) - pos;
+		float homedist = homedir.length();
+		auto homenorm = homedir / homedist;
+		if (homedist < 100) {
+			speed = homenorm * homedist;
+		}
+	}
+	break;
 
 	case LAND:
-		if (origin) {
-			height -= dt * 20;
-			if (height < 0) {
-				height = 0;
-				origin->numDrones++;
-				state = WAIT;
-			}
-		}
-		else {
-			alive = false;
-			game.spawnExplosion(pos);
+		height -= dt * 20;
+		if (height < 0) {
+			height = 0;
+			origin->numDrones++;
+			state = WAIT;
 		}
 		break;
 	}
@@ -128,8 +224,9 @@ void Drone::update(float dt, Game& game, Sfx& sfx) {
 
 void Drone::draw_top(Gfx& gfx) {
 	float angle = atan2(speed.y, speed.x);
+	auto color = repair ? Vec4(0.5, 0.5, 1, 1) : Vec4::WHITE;
 
-	gfx.drawRotatedSprite(sprite, pos - floor(cameraPosition) - Vec2(0, height), angle);
+	gfx.drawRotatedSprite(sprite, pos - floor(cameraPosition) - Vec2(0, height), angle, color);
 }
 
 void Drone::draw_bottom(Gfx& gfx) {

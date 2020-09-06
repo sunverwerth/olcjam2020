@@ -29,7 +29,7 @@ SOFTWARE.
 
 class Grenade: public Unit {
 public:
-	Grenade(const Vec2& pos, const Vec2& target);
+	Grenade(const Vec2& pos, const Vec2& target, Faction faction);
 	virtual void update(float dt, Game& game, Sfx& sfx) override;
 	virtual void draw_top(Gfx& gfx) override;
 	virtual void draw_bottom(Gfx& gfx) override;
@@ -41,4 +41,5 @@ public:
 	float rotation;
 	float time{ 0 };
 	Vec2 target;
+	Faction faction;
 };

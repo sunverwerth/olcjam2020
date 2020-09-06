@@ -42,7 +42,7 @@ void Rocket::update(float dt, Game& game, Sfx& sfx) {
 
 	if (distance.length() < 10) {
 		alive = false;
-		game.spawnExplosion(pos);
+		game.spawnExplosion(pos, false, faction);
 	}
 }
 

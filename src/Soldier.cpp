@@ -58,7 +58,7 @@ void Soldier::update(float dt, Game& game, Sfx& sfx) {
 			break;
 		}
 		auto tpos = target->pos + Vec2(16, 16);
-		auto vel = (tpos - pos).normalized() * 15;
+		auto vel = (tpos - pos).normalized() * 10;
 		mirrored = vel.x > 0;
 		auto newpos = pos + vel * dt;
 		pos = newpos;
@@ -72,11 +72,11 @@ void Soldier::update(float dt, Game& game, Sfx& sfx) {
 		}
 		if (shoottime < 0) {
 			if (grenadier) {
-				game.spawnGrenade(pos, target->pos + Vec2(16, 16));
+				game.spawnGrenade(pos, target->pos + Vec2(16, 16), Faction::CPU);
 				shoottime = frand(2, 4);
 			}
 			else {
-				target->damage(DAMAGE_BULLET);
+				target->damage(damage_bullet, Faction::CPU);
 				sfx.play(sfx.getAudioClip("media/sounds/gun_burst.wav", 2), 0.5f, 0.0f, frand(0.9, 1.1));
 				shoottime = frand(1, 3);
 			}
@@ -95,6 +95,8 @@ void Soldier::draw_bottom(Gfx& gfx) {
 	gfx.drawSprite(sprites[frame], pos + Vec2(-5, -4) - floor(cameraPosition), Vec4::WHITE, mirrored);
 }
 
-void Soldier::damage(DamageType) {
-	alive = false;
+void Soldier::damage(int amount, Faction originator) {
+	if (originator == Faction::CPU) return;
+	health -= amount;
+	if (health <= 0) alive = false;
 }

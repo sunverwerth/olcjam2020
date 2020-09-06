@@ -30,25 +30,35 @@ class Sfx;
 class Gfx;
 class Game;
 
-enum DamageType {
-	DAMAGE_BULLET,
-	DAMAGE_EXPLOSION,
-	DAMAGE_EXPLOSION_SMALL,
+enum class Faction {
+	Player,
+	CPU,
 };
+
+static const int damage_bullet = 5;
+static const int damage_grenade = 40;
+static const int damage_explosion = 100;
 
 class Unit {
 public:
-	Unit(const Vec2& pos) : pos(pos) {}
+	Unit(const Vec2& pos, float maxHealth_) : pos(pos), health(maxHealth_), maxHealth(maxHealth_) {}
 	virtual ~Unit() {}
 	virtual void update(float dt, Game& game, Sfx& sfx) {};
 	virtual void draw_floor(Gfx& gfx) {};
 	virtual void draw_structure(Gfx& gfx) {};
 	virtual void draw_bottom(Gfx& gfx) {};
 	virtual void draw_top(Gfx& gfx) {};
-	virtual void damage(DamageType) {};
+	virtual void damage(int amount, Faction originator) {};
 	bool isAlive() const { return alive; }
 	bool inRadius(const Vec2& c, float r) {
 		return (c - pos).length() < r;
+	}
+	bool hasFullHealth() const {
+		return health >= maxHealth;
+	}
+	virtual void heal(float amount) {
+		health += amount;
+		if (health > maxHealth) health = maxHealth;
 	}
 
 	virtual bool isSoldier() const { return false; }
@@ -57,8 +67,13 @@ public:
 	virtual bool isDroneDeployer() const { return false; }
 	virtual bool isSiliconRefinery() const { return false; }
 	virtual bool isCrater() const { return false; }
+	bool isPlayerStructure() const {
+		return isWall() || isComputeCore() || isDroneDeployer() || isSiliconRefinery();
+	}
 
 public:
 	Vec2 pos;
 	bool alive{ true };
+	float health;
+	float maxHealth;
 };

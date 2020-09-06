@@ -29,7 +29,7 @@ SOFTWARE.
 
 class Jet: public Unit {
 public:
-	Jet(const Vec2& pos, const Vec2& dir, float speed): Unit(pos), dir(dir), speed(speed) {}
+	Jet(const Vec2& pos, const Vec2& dir, float speed): Unit(pos, 0), dir(dir), speed(speed) {}
 	virtual void update(float dt, Game& game, Sfx& sfx) override;
 	virtual void draw_top(Gfx& gfx) override;
 	virtual void draw_bottom(Gfx& gfx) override;

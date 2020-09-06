@@ -29,7 +29,7 @@ SOFTWARE.
 
 class Rocket: public Unit {
 public:
-	Rocket(const Vec2& pos, const Vec2& target, float speed): Unit(pos), target(target), speed(speed) {}
+	Rocket(const Vec2& pos, const Vec2& target, float speed, Faction faction): Unit(pos, 0), target(target), speed(speed), faction(faction) {}
 	virtual void update(float dt, Game& game, Sfx& sfx) override;
 	virtual void draw_top(Gfx& gfx) override;
 	virtual void draw_bottom(Gfx& gfx) override;
@@ -41,4 +41,5 @@ private:
 	Vec2 target;
 	float speed;
 	float height{ 32 };
+	Faction faction;
 };

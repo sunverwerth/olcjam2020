@@ -84,6 +84,7 @@ enum Structure {
 	STRUCTURE_COMPUTE_CORE,
 	STRUCTURE_SILICON_REFINERY,
 	STRUCTURE_DRONE_DEPLOYER,
+	STRUCTURE_REPAIR_DRONE_DEPLOYER,
 	STRUCTURE_COUNT,
 };
 
@@ -122,6 +123,14 @@ Sprite sprite_dust;
 const int dustParticleCount = 50;
 DustParticle dustParticles[dustParticleCount];
 AudioTrack* wind_sound;
+const char* tooltip;
+const char* messageText;
+float messageTimer;
+
+void message(const char* txt) {
+	messageText = txt;
+	messageTimer = 1;
+}
 
 struct BuildInfo {
 	bool canBuildMultiple;
@@ -131,12 +140,22 @@ struct BuildInfo {
 	float buildOpsRemaining{ 0 };
 	int inProgressCount{ 0 };
 	int readyCount{ 0 };
+	std::string tooltip;
 
-	BuildInfo(bool canBuildMultiple, float opsToBuild, float siliconToBuild, const Sprite& sprite)
+	BuildInfo(const char* name, const char* desc, bool canBuildMultiple, float opsToBuild, float siliconToBuild, const Sprite& sprite)
 		: canBuildMultiple(canBuildMultiple),
 		opsToBuild(opsToBuild),
 		siliconToBuild(siliconToBuild),
-		sprite(sprite) {}
+		sprite(sprite)
+	{		
+		std::stringstream sstr;
+		sstr << name << "\n";
+		sstr << siliconToBuild << " Si\n";
+		sstr << opsToBuild << " GFlops\n";
+		sstr << desc;
+		
+		tooltip = sstr.str();
+	}
 
 	bool build() {
 		if (inProgressCount <= 0 || canBuildMultiple) {
@@ -148,52 +167,81 @@ struct BuildInfo {
 	}
 
 	virtual void place(int x, int y, Game& game, Sfx& sfx) = 0;
+	virtual bool canPlace(int x, int y, Game& game) = 0;
 };
 
 struct FloorBuildInfo : public BuildInfo {
-	FloorBuildInfo(bool canBuildMultiple, float opsToBuild, float siliconToBuild, const Sprite& sprite)
-		: BuildInfo(canBuildMultiple, opsToBuild, siliconToBuild, sprite) {}
+	FloorBuildInfo(const char* name, const char* desc, bool canBuildMultiple, float opsToBuild, float siliconToBuild, const Sprite& sprite)
+		: BuildInfo(name, desc, canBuildMultiple, opsToBuild, siliconToBuild, sprite) {}
 
 	virtual void place(int x, int y, Game& game, Sfx& sfx) override {
-		int tile = level.getTile(x, y);
-		if (tile == 0) {
-			level.setTile(x, y, 4);
+		if (canPlace(x, y, game)) {
+			level.setTile(x, y, 1 + rand() % 4);
 			sfx.play(sfx.getAudioClip("media/sounds/thump.wav"));
 			readyCount--;
 		}
+	}
+
+	virtual bool canPlace(int x, int y, Game& game) override {
+		if (level.getTile(x, y) != 0) {
+			message("Can not place floor here");
+			return false;
+		}
+		return true;
 	}
 };
 
 template<typename T> struct StructureBuildInfo : public BuildInfo {
-	StructureBuildInfo(bool canBuildMultiple, float opsToBuild, float siliconToBuild, const Sprite& sprite)
-		: BuildInfo(canBuildMultiple, opsToBuild, siliconToBuild, sprite) {}
+	StructureBuildInfo(const char* name, const char* desc, bool canBuildMultiple, float opsToBuild, float siliconToBuild, const Sprite& sprite, void(*fixup)(T*) = nullptr)
+		: BuildInfo(name, desc, canBuildMultiple, opsToBuild, siliconToBuild, sprite), fixup(fixup) {}
 
 	virtual void place(int x, int y, Game& game, Sfx& sfx) override {
-		auto structure = level.getStructure(x, y);
-		if (level.getUnits(x, y).empty()) {
+		if (canPlace(x, y, game)) {
 			sfx.play(sfx.getAudioClip("media/sounds/thump.wav"));
 			readyCount--;
 			auto pos = Vec2(x, y) * 32;
-			game.spawn<T>(pos);
+			auto instance = game.spawn<T>(pos);
+			if (fixup) fixup(instance);
 		}
 	}
+
+	virtual bool canPlace(int x, int y, Game& game) override {
+		auto structure = level.getStructure(x, y);
+		if (!level.getUnits(x, y).empty()) {
+			message("This space is already occupied");
+			return false;
+		}
+
+		auto tile = level.getTile(x, y);
+		if (tile < 1 || tile > 4) {
+			message("Structure must be placed on floor tile");
+			return false;
+		}
+
+		return true;
+	}
+
+	void(*fixup)(T*) { nullptr };
 };
 
-StructureBuildInfo<Wall> wallBuildInfo(true, 0.1, 1, structures[STRUCTURE_WALL]);
-FloorBuildInfo floorBuildInfo(true, 0.5, 1, tiles[4]);
-StructureBuildInfo<ComputeCore> computeBuildInfo(false, 1, 1, structures[STRUCTURE_COMPUTE_CORE]);
-StructureBuildInfo<SiliconRefinery> siliconBuildInfo(false, 1, 1, structures[STRUCTURE_SILICON_REFINERY]);
-StructureBuildInfo<DroneDeployer> droneBuildInfo(false, 1, 1, structures[STRUCTURE_DRONE_DEPLOYER]);
+StructureBuildInfo<Wall> wallBuildInfo("Wall", "Protection against infantry", true, 100, 5, structures[STRUCTURE_WALL]);
+FloorBuildInfo floorBuildInfo("Floor", "To place buildings", true, 100, 5, tiles[4]);
+StructureBuildInfo<ComputeCore> computeBuildInfo("Compute Core", "Generates 1337 GFlops per second", false, 50000, 1000, structures[STRUCTURE_COMPUTE_CORE]);
+StructureBuildInfo<SiliconRefinery> siliconBuildInfo("Silicon Refinery", "Produces 10 Silicon per second", false, 30000, 500, structures[STRUCTURE_SILICON_REFINERY]);
+StructureBuildInfo<DroneDeployer> droneBuildInfo("Attack Drone Deployer", "Deploys attack drones", false, 100000, 5000, structures[STRUCTURE_DRONE_DEPLOYER]);
+StructureBuildInfo<DroneDeployer> repairDroneBuildInfo("Repair Drone Deployer", "Deploys repair drones", false, 200000, 5000, structures[STRUCTURE_REPAIR_DRONE_DEPLOYER], [](DroneDeployer* dd) {
+	dd->repair = true;
+});
 
-BuildInfo* buildInfos[]{ &wallBuildInfo, &floorBuildInfo, &computeBuildInfo, &siliconBuildInfo, &droneBuildInfo };
+BuildInfo* buildInfos[]{ &wallBuildInfo, &floorBuildInfo, &computeBuildInfo, &siliconBuildInfo, &droneBuildInfo, &repairDroneBuildInfo };
 
 
 const int WAVE_DURATION = 30;
 const int WAVE_SPACING = 90;
 
 void Game::addUnit(Unit* unit, const Vec2& pos) {
-	if (unit->isComputeCore()) computingPower += 1;
-	if (unit->isSiliconRefinery()) siliconPerSecond += 1;
+	if (unit->isComputeCore()) computingPower += 1337;
+	if (unit->isSiliconRefinery()) siliconPerSecond += 15;
 
 	auto rpos = floor(pos / 32);
 	int x = rpos.x;
@@ -202,8 +250,8 @@ void Game::addUnit(Unit* unit, const Vec2& pos) {
 }
 
 void Game::removeUnit(Unit* unit, const Vec2& pos) {
-	if (unit->isComputeCore()) computingPower -= 1;
-	if (unit->isSiliconRefinery()) siliconPerSecond -= 1;
+	if (unit->isComputeCore()) computingPower -= 1337;
+	if (unit->isSiliconRefinery()) siliconPerSecond -= 15;
 
 	auto rpos = floor(pos / 32);
 	int x = rpos.x;
@@ -227,7 +275,7 @@ void Game::start() {
 	wind_sound = sfx.loop(clip, 0.5, 0, 0.6);
 	guitexture = gfx.getTexture("media/textures/gui.png");
 	sprites = gfx.getTexture("media/textures/sprites.png");
-	gfx.setPixelScale(3);
+	gfx.setPixelScale(2);
 	gfx.setClearColor(Vec4::BLACK);
 
 	for (int i = 0; i < 32; i++) {
@@ -250,7 +298,7 @@ void Game::start() {
 	Soldier::sprites[4] = { sprites, Vec2(0, 495), Vec2(6, 5) };
 	Soldier::sprites[5] = { sprites, Vec2(0, 500), Vec2(6, 5) };
 
-	Rocket::sprite = { sprites, Vec2(0,508),Vec2(8,4) };
+	Rocket::sprite = { sprites, Vec2(0,509),Vec2(4, 1) };
 
 	Grenade::sprite = { sprites, Vec2(16, 508),Vec2(2, 2) };
 
@@ -276,6 +324,8 @@ void Game::start() {
 
 	DroneDeployer::sprites[0] = { sprites, Vec2(512, 896), Vec2(32, 64), Vec2(0, -32) };
 	DroneDeployer::sprites[1] = { sprites, Vec2(512, 960), Vec2(32, 64), Vec2(0, -32) };
+	DroneDeployer::sprites[2] = { sprites, Vec2(544, 896), Vec2(32, 64), Vec2(0, -32) };
+	DroneDeployer::sprites[3] = { sprites, Vec2(544, 960), Vec2(32, 64), Vec2(0, -32) };
 
 	sprite_dust = { sprites, Vec2(500,500), Vec2(1,1) };
 	for (int i = 0; i < dustParticleCount; i++) {
@@ -351,23 +401,24 @@ bool Game::inViewport(const Vec2& pos) const {
 	return true;
 }
 
-Drone* Game::spawnDrone(const Vec2& pos) {
+Drone* Game::spawnDrone(const Vec2& pos, bool repair) {
 	auto drone = new Drone(pos);
+	drone->repair = repair;
 	units.push_back(drone);
 	addUnit(drone, pos);
 	return drone;
 }
 
-void Game::spawnRocket(const Vec2& pos, const Vec2& target, float speed) {
+void Game::spawnRocket(const Vec2& pos, const Vec2& target, float speed, Faction faction) {
 	float pan = clamp((pos.x - gfx.width() / gfx.getPixelScale() - cameraPosition.x) / gfx.width(), -0.5, 0.5);
 	sfx.play(sfx.getAudioClip("media/sounds/rocket.wav"), 0.1f, pan, frand(0.9, 1.1));
 
-	auto rocket = new Rocket(pos, target, speed);
+	auto rocket = new Rocket(pos, target, speed, faction);
 	units.push_back(rocket);
 	addUnit(rocket, pos);
 }
 
-void Game::spawnExplosion(const Vec2& pos, bool small) {
+void Game::spawnExplosion(const Vec2& pos, bool small, Faction faction) {
 	auto rpos = floor(pos / 32);
 	if (level.getStructure(rpos.x, rpos.y) == -1) {
 		level.setStructure(rpos.x, rpos.y, 13);
@@ -375,7 +426,7 @@ void Game::spawnExplosion(const Vec2& pos, bool small) {
 
 	for (auto& unit : units) {
 		if (unit->inRadius(pos, 24)) {
-			unit->damage(small ? DAMAGE_EXPLOSION : DAMAGE_EXPLOSION_SMALL);
+			unit->damage(small ? damage_grenade : damage_explosion, faction);
 		}
 	}
 
@@ -398,11 +449,11 @@ void Game::spawnSoldier() {
 	auto soldier = new Soldier(mainCPUPosition + Vec2(frand(-1, 1), frand(-1, 1)).normalized() * 300);
 	units.push_back(soldier);
 	addUnit(soldier, soldier->pos);
-	if (rand() % 10 < nextWaveLevel) soldier->grenadier = true;
+	if (rand() % 50 < nextWaveLevel) soldier->grenadier = true;
 }
 
-Grenade* Game::spawnGrenade(const Vec2& pos, const Vec2& target) {
-	auto grenade = new Grenade(pos, target);
+Grenade* Game::spawnGrenade(const Vec2& pos, const Vec2& target, Faction faction) {
+	auto grenade = new Grenade(pos, target, faction);
 	units.push_back(grenade);
 	addUnit(grenade, grenade->pos);
 	return grenade;
@@ -418,6 +469,8 @@ void Game::update() {
 	auto t = timer.elapsedTime();
 	float dt = timer.deltaTime();
 	if (dt > 0.1f) dt = 0.1f;
+
+	messageTimer -= dt;
 
 	// distribute gflops
 	const int numRounds = 10;
@@ -452,9 +505,9 @@ void Game::update() {
 
 	// place objects
 	if (mouseX < gfx.width() - 80 * gfx.getPixelScale() && selectedBuildInfo && selectedBuildInfo->readyCount > 0) {
+		int x = (mouseX / gfx.getPixelScale() + cameraPosition.x) / 32;
+		int y = (mouseY / gfx.getPixelScale() + cameraPosition.y) / 32;
 		if (mousePressed & SDL_BUTTON(1)) {
-			int x = (mouseX / gfx.getPixelScale() + cameraPosition.x) / 32;
-			int y = (mouseY / gfx.getPixelScale() + cameraPosition.y) / 32;
 			selectedBuildInfo->place(x, y, *this, sfx);
 		}
 	}
@@ -579,12 +632,16 @@ void Game::drawFrame() {
 	}
 
 	if (tooltip) {
-		float width = strlen(tooltip) * 8 + 8;
-		auto bubblepos = Vec2(mouseX - 48, mouseY - 48) / gfx.getPixelScale();
+		float width = longestLine(tooltip) * 8 + 8;
+		auto bubblepos = Vec2(mouseX - 48, mouseY - countNewlines(tooltip) * 16 - 48) / gfx.getPixelScale();
 		if (bubblepos.x + width > gfx.width() / gfx.getPixelScale()) {
 			bubblepos.x -= bubblepos.x + width - gfx.width() / gfx.getPixelScale();
 		}
 		bubble(tooltip, bubblepos, Vec2(mouseX, mouseY) / gfx.getPixelScale());
+	}
+
+	if (messageTimer > 0) {
+		gfx.drawText(guitexture, messageText, Vec2(gfx.width() / gfx.getPixelScale() - 80 - strlen(messageText) * 8, 2));
 	}
 }
 
@@ -597,12 +654,11 @@ void Game::startWave() {
 void Game::doWave() {
 	static double nextSoldier = 0;
 	if (timer.elapsedTime() > nextSoldier) {
-		float delay = 1;
+		float delay = 0.5;
 		switch (nextWaveLevel) {
-		case 1: delay = 1; break;
-		case 2: delay = 0.5; break;
-		case 3: delay = 0.2; break;
-		default: delay = 0.1;
+		case 1: delay = 2; break;
+		case 2: delay = 1.5; break;
+		case 3: delay = 1; break;
 		}
 		nextSoldier = timer.elapsedTime() + delay;
 		spawnSoldier();
@@ -611,7 +667,7 @@ void Game::doWave() {
 	if (nextWaveLevel >= 3) {
 		static double nextJet = 0;
 		if (timer.elapsedTime() > nextJet) {
-			nextJet = timer.elapsedTime() + 5;
+			nextJet = timer.elapsedTime() + 10;
 			auto dir = Vec2(frand(-1, 1), frand(-1, 1)).normalized();
 			Vec2 hittarget(-1, -1);
 			for (auto unit : units) {
@@ -637,9 +693,10 @@ void Game::doWave() {
 		}
 	}
 }
-void Game::buildButton(BuildInfo& info, const char* text, const Vec2& pos, const Vec2& size) {
+
+void Game::buildButton(BuildInfo& info, const Vec2& pos, const Vec2& size) {
 	Vec2 windowPos = Vec2(gfx.width() / gfx.getPixelScale() - 80, 0);
-	if (button(info.sprite, text, pos, size)) {
+	if (button(info.sprite, info.tooltip.c_str(), pos, size)) {
 		selectedBuildInfo = &info;
 
 		if (silicon >= info.siliconToBuild) {
@@ -695,14 +752,21 @@ void Game::prepareGUI() {
 		Vec2 windowPos = Vec2(gfx.width() / gfx.getPixelScale() - 80, 0);
 		window("TGM v1.0", windowPos, Vec2(80, gfx.height() / gfx.getPixelScale()));
 
-		buildButton(wallBuildInfo, "Build Wall", windowPos + Vec2(4, 32), Vec2(36, 68));
-		buildButton(computeBuildInfo, "Build Compute Core", windowPos + Vec2(40, 32), Vec2(36, 68));
-		buildButton(siliconBuildInfo, "Build Silicon Refinery", windowPos + Vec2(4, 100), Vec2(36, 68));
-		buildButton(droneBuildInfo, "Build Drone Deployer", windowPos + Vec2(40, 100), Vec2(36, 68));
-		buildButton(floorBuildInfo, "Build Floor", windowPos + Vec2(4, 168), Vec2(36, 36));
+		buildButton(wallBuildInfo, windowPos + Vec2(4, 32), Vec2(36, 68));
+		buildButton(computeBuildInfo, windowPos + Vec2(40, 32), Vec2(36, 68));
+		buildButton(siliconBuildInfo, windowPos + Vec2(4, 100), Vec2(36, 68));
+		buildButton(droneBuildInfo, windowPos + Vec2(40, 100), Vec2(36, 68));
+		buildButton(repairDroneBuildInfo, windowPos + Vec2(4, 168), Vec2(36, 68));
+		buildButton(floorBuildInfo, windowPos + Vec2(40, 168), Vec2(36, 36));
 
 		if (button("Exit", Vec2(gfx.width() / gfx.getPixelScale() - 76, gfx.height() / gfx.getPixelScale() - 20), Vec2(72, 16))) {
 			keepRunning = false;
+		}
+
+		if (computingPower <= 0) {
+			auto size = Vec2(31, 15) * 4;
+			auto center = Vec2(gfx.width(), gfx.height()) / gfx.getPixelScale() / 2;
+			gfx.drawTextureClip(sprites, Vec2(21, 775), Vec2(31, 15), center - size / 2, size);
 		}
 	}
 }

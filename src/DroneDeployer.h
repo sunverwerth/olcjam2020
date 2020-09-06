@@ -35,18 +35,20 @@ public:
 	virtual void update(float dt, Game& game, Sfx& sfx) override;
 	virtual void draw_structure(Gfx& gfx) override;
 	virtual void draw_top(Gfx& gfx) override;
-	virtual void damage(DamageType) override;
+	virtual void damage(int amount, Faction originator) override;
 	virtual bool isDroneDeployer() const override { return true; }
+	virtual void heal(float amount) override;
 
 public:
-	static Sprite sprites[2];
+	static Sprite sprites[4];
 
 public:
 	float time{ 0 };
 	float damageTime{ 0 };
-	float health{ 100 };
+	float healTime{ 0 };
 	float animSpeed;
 	int numDrones{ 1 };
 	float checkEnemyTime{ 0 };
 	Drone* drone{ nullptr };
+	bool repair{ false };
 };

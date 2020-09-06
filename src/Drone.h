@@ -33,6 +33,7 @@ class Drone : public Unit {
 	enum State {
 		WAIT,
 		START,
+		REPAIR,
 		ATTACK,
 		RETURN,
 		LAND
@@ -40,8 +41,11 @@ class Drone : public Unit {
 public:
 	Drone(const Vec2& pos);
 	virtual void update(float dt, Game& game, Sfx& sfx) override;
+	void updateAttack(float dt, Game& game, Sfx& sfx);
+	void updateRepair(float dt, Game& game, Sfx& sfx);
 	virtual void draw_top(Gfx& gfx) override;
 	virtual void draw_bottom(Gfx& gfx) override;
+	void selfdestruct(Game& game);
 
 public:
 	static Sprite sprite;
@@ -52,6 +56,8 @@ public:
 	float fireTime{ 0 };
 	DroneDeployer* origin{ nullptr };
 	int numRockets{ 1 };
+	float healthpoints{ 100 };
 	float height{ 0 };
-	State state{ START };
+	State state{ WAIT };
+	bool repair{ false };
 };

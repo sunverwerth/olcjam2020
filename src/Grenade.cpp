@@ -30,19 +30,19 @@ SOFTWARE.
 
 Sprite Grenade::sprite;
 
-Grenade::Grenade(const Vec2& pos, const Vec2& target) : Unit(pos), target(target), rotation(frand(-20, 20)) {}
+Grenade::Grenade(const Vec2& pos, const Vec2& target, Faction faction) : Unit(pos, 0), target(target), rotation(frand(-20, 20)), faction(faction) {}
 
 void Grenade::update(float dt, Game& game, Sfx& sfx) {
 	time += dt;
 	if (time > 1) {
 		alive = false;
-		game.spawnExplosion(target, true);
+		game.spawnExplosion(target, true, faction);
 	}
 }
 
 void Grenade::draw_top(Gfx& gfx) {
-	float height = sin(time * 3.14159) * 16;
-	gfx.drawRotatedSprite(sprite, pos + (target - pos) * time - floor(cameraPosition) + Vec2(0, height), time * rotation);
+	float height = sin(time * 3.14159) * 32;
+	gfx.drawRotatedSprite(sprite, pos + (target - pos) * time - floor(cameraPosition) + Vec2(0, -height), time * rotation);
 }
 
 void Grenade::draw_bottom(Gfx& gfx) {

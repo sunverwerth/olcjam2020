@@ -40,6 +40,7 @@ Gfx::Gfx(const char* title, int width, int height, bool fullscreen) {
 	log("Gfx::gfx()");
 	int windowFlags = SDL_WINDOW_OPENGL;
 	if (fullscreen) windowFlags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+	else windowFlags |= SDL_WINDOW_RESIZABLE;
 	window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, windowFlags);
 	if (!window) sys_crash("Could not create SDL window.");
 	SDL_GetWindowSize(window, &width_, &height_);
@@ -87,6 +88,8 @@ Gfx::~Gfx() {
 }
 
 void Gfx::beginFrame() {
+	SDL_GetWindowSize(window, &width_, &height_);
+
 	glViewport(0, 0, width_, height_);
 	glClearColor(clearColor.x, clearColor.y, clearColor.z, clearColor.w);
 	glClearDepth(1.0);

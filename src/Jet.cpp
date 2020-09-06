@@ -28,10 +28,16 @@ SOFTWARE.
 #include "Game.h"
 #include "utils.h"
 #include "Grenade.h"
+#include "Sfx.h"
+#include "AudioClip.h"
 
 Sprite Jet::sprites[2];
 
 void Jet::update(float dt, Game& game, Sfx& sfx) {
+	if (time == 0) {
+		sfx.play(sfx.getAudioClip("media/sounds/jet.wav"), 1, 0, frand(0.9, 1.1));
+	}
+
 	speed += dt * 100;
 	if (speed > 200) speed = 200;
 
@@ -41,7 +47,7 @@ void Jet::update(float dt, Game& game, Sfx& sfx) {
 	drop -= dt;
 	if ((pos-target).length() < 150 && drop < 0) {
 		drop = frand(0.05, 0.1);
-		auto grenade = game.spawnGrenade(pos, pos);
+		auto grenade = game.spawnGrenade(pos, pos, Faction::CPU);
 		grenade->time = 0.5f;
 	}
 
