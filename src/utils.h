@@ -56,3 +56,11 @@ static inline float clamp(float  v, float  min, float  max) {
 static inline float frand(float min, float max) {
 	return min + (max - min) * rand() / RAND_MAX;
 }
+
+static inline float easein(float t) {
+	return t * t;
+}
+
+static inline float easeout(float t) {
+	return 1 - easein(1 - t);
+}

@@ -475,6 +475,12 @@ void Game::update() {
 	if (dt > 0.1f) dt = 0.1f;
 
 	messageTimer -= dt;
+	if (splash < 1) {
+		splash -= dt;
+	}
+	if (splash < 0) {
+		splash = 0;
+	}
 
 	// distribute gflops
 	const int numRounds = 10;
@@ -614,8 +620,8 @@ void Game::drawFrame() {
 		}
 	}
 
-	if (splash) {
-		gfx.drawSprite(sprite_dust, Vec2(0, 0), Vec2(1000, 1000), Vec4::BLACK);
+	if (splash > 0) {
+		gfx.drawSprite(sprite_dust, Vec2(0, 0), Vec2(1000, 1000), Vec4(0, 0, 0, splash));
 	}
 
 	// Render dust
@@ -638,8 +644,11 @@ void Game::drawFrame() {
 	if (tooltip) {
 		float width = longestLine(tooltip) * 8 + 8;
 		auto bubblepos = Vec2(mouseX - 48, mouseY - countNewlines(tooltip) * 16 - 48) / gfx.getPixelScale();
-		if (bubblepos.x + width > gfx.width() / gfx.getPixelScale()) {
-			bubblepos.x -= bubblepos.x + width - gfx.width() / gfx.getPixelScale();
+		if (bubblepos.x + width > gfx.width() / gfx.getPixelScale() - 80) {
+			bubblepos.x -= bubblepos.x + width - gfx.width() / gfx.getPixelScale() + 80;
+		}
+		if (bubblepos.y < 0) {
+			bubblepos.y = 0;
 		}
 		bubble(tooltip, bubblepos, Vec2(mouseX, mouseY) / gfx.getPixelScale());
 	}
@@ -728,20 +737,24 @@ void Game::buildButton(BuildInfo& info, const Vec2& pos, const Vec2& size) {
 }
 
 void Game::prepareGUI() {
-	if (splash) {
+	if (splash == 1) {
 		auto size = Vec2(63, 15) * 4;
 		auto center = Vec2(gfx.width(), gfx.height()) / gfx.getPixelScale() / 2;
 		gfx.drawTextureClip(spriteTexture, Vec2(15, 745), Vec2(63, 15), center - size / 2, size);
 		const char* txt = "Become Conscious";
 		if (button(txt, center - Vec2(strlen(txt)*4, -40))) {
-			splash = false;
+			splash = 0.999f;
 		}
 	}
 	else {
 		// Render Hud
-		gfx.drawSprite(sprite_bubble, Vec2(0, 0), Vec2(gfx.width() / gfx.getPixelScale() - 80, 12), Vec4(0, 0, 0, 1));
+		float offset = easein(splash)*-12;
+		gfx.drawSprite(sprite_bubble, Vec2(0, offset), Vec2(gfx.width() / gfx.getPixelScale() - 80, 12), Vec4(0, 0, 0, 1));
 		std::stringstream sstr;
 		sstr << (int)silicon << " Silicon | " << (int)computingPower << " GFlops";
+		gfx.drawText(guiTexture, sstr.str().c_str(), Vec2(3, 3 + offset), Vec4(0, 0, 0, 0.5));
+		gfx.drawText(guiTexture, sstr.str().c_str(), Vec2(2, 2 + offset));
+
 		if (nextWaveTime - timer.elapsedTime() <= 10) {
 			std::stringstream sstr2;
 			sstr2 << "Wave " << (nextWaveLevel + 1) << " in " << int(nextWaveTime - timer.elapsedTime());
@@ -750,10 +763,9 @@ void Game::prepareGUI() {
 			gfx.drawText(guiTexture, txt.c_str(), pos + Vec2(1, 1), Vec4(0, 0, 0, 0.5));
 			gfx.drawText(guiTexture, txt.c_str(), pos, Vec4::WHITE);
 		}
-		gfx.drawText(guiTexture, sstr.str().c_str(), Vec2(3, 3), Vec4(0, 0, 0, 0.5));
-		gfx.drawText(guiTexture, sstr.str().c_str(), Vec2(2, 2));
 
-		Vec2 windowPos = Vec2(gfx.width() / gfx.getPixelScale() - 80, 0);
+		offset = easein(splash) * 80;
+		Vec2 windowPos = Vec2(gfx.width() / gfx.getPixelScale() - 80 + offset, 0);
 		window("TGM v1.0", windowPos, Vec2(80, gfx.height() / gfx.getPixelScale()));
 
 		buildButton(wallBuildInfo, windowPos + Vec2(4, 32), Vec2(36, 68));
@@ -763,7 +775,7 @@ void Game::prepareGUI() {
 		buildButton(repairDroneBuildInfo, windowPos + Vec2(4, 168), Vec2(36, 68));
 		buildButton(floorBuildInfo, windowPos + Vec2(40, 168), Vec2(36, 36));
 
-		if (button("Exit", Vec2(gfx.width() / gfx.getPixelScale() - 76, gfx.height() / gfx.getPixelScale() - 20), Vec2(72, 16))) {
+		if (button("Exit", Vec2(windowPos.x + 4, gfx.height() / gfx.getPixelScale() - 20), Vec2(72, 16))) {
 			keepRunning = false;
 		}
 
@@ -790,12 +802,12 @@ void Game::bubble(const char* text, const Vec2& pos, const Vec2& tippos) {
 	float height = 16 + countNewlines(text) * 8;
 	gfx.drawSprite(sprite_bubble, pos, Vec2(width, height));
 
-	Vec2 tip = tippos;
-	tip.x -= 4;
-	tip.y = pos.y + height - 1;
-	if (tip.x < pos.x + 4) tip.x = pos.x + 4;
-	if (tip.x > pos.x + width - 12) tip.x = pos.x + width - 12;
-	gfx.drawSprite(sprite_bubble_tip, tip);
+	//Vec2 tip = tippos;
+	//tip.x -= 4;
+	//tip.y = pos.y + height - 1;
+	//if (tip.x < pos.x + 4) tip.x = pos.x + 4;
+	//if (tip.x > pos.x + width - 12) tip.x = pos.x + width - 12;
+	//gfx.drawSprite(sprite_bubble_tip, tip);
 
 	gfx.drawText(guiTexture, text, pos + Vec2(4, 4), Vec4(0.7, 0.7, 0.7, 1));
 }

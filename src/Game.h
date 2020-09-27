@@ -110,5 +110,5 @@ public:
 
 	BuildInfo* selectedBuildInfo{ nullptr };
 
-	bool splash{ true };
+	float splash{ 1 };
 };
