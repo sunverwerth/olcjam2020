@@ -38,6 +38,16 @@ void APIENTRY debugCallback(GLenum source, GLenum type, GLuint id, GLenum severi
 
 Gfx::Gfx(const char* title, int width, int height, bool fullscreen) {
 	log("Gfx::gfx()");
+	SDL_Rect rect;
+	if (SDL_GetDisplayUsableBounds(0, &rect) == 0) {
+		if (rect.w < width) {
+			width = rect.w;
+		}
+		if (rect.h < height + 22) {
+			height = rect.h - 22;
+		}
+	}
+
 	int windowFlags = SDL_WINDOW_OPENGL;
 	if (fullscreen) windowFlags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
 	else windowFlags |= SDL_WINDOW_RESIZABLE;
