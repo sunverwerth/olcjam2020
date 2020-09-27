@@ -833,7 +833,7 @@ void Game::prepareGUI() {
 
 		offset = easein(splash + gameOver) * 80;
 		Vec2 windowPos = Vec2(gfx.width() / gfx.getPixelScale() - 80 + offset, 0);
-		window("TGM v1.0", windowPos, Vec2(80, gfx.height() / gfx.getPixelScale()));
+		window("TGM v1.1", windowPos, Vec2(80, gfx.height() / gfx.getPixelScale()));
 
 		buildButton(wallBuildInfo, windowPos + Vec2(4, 32), Vec2(36, 68));
 		buildButton(computeBuildInfo, windowPos + Vec2(40, 32), Vec2(36, 68));
