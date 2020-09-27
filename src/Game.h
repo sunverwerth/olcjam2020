@@ -94,6 +94,7 @@ public:
 	unsigned int mouseReleased{ 0 };
 	int mouseX{ 0 };
 	int mouseY{ 0 };
+	bool controlPressed{ false };
 	int controlId{ 0 };
 	int activeControlId{ 0 };
 

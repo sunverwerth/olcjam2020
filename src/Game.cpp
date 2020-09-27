@@ -140,21 +140,30 @@ struct BuildInfo {
 	float buildOpsRemaining{ 0 };
 	int inProgressCount{ 0 };
 	int readyCount{ 0 };
-	std::string tooltip;
+	std::string name;
+	std::string desc;
 
 	BuildInfo(const char* name, const char* desc, bool canBuildMultiple, float opsToBuild, float siliconToBuild, const Sprite& sprite)
-		: canBuildMultiple(canBuildMultiple),
+		: name(name),
+		desc(desc),
+		canBuildMultiple(canBuildMultiple),
 		opsToBuild(opsToBuild),
 		siliconToBuild(siliconToBuild),
 		sprite(sprite)
 	{
+	}
+
+	const std::string& tooltip(float gflops) {
 		std::stringstream sstr;
 		sstr << name << "\n";
 		sstr << siliconToBuild << " Si\n";
-		sstr << opsToBuild << " GFlops\n";
-		sstr << desc;
+		sstr << int(opsToBuild/gflops) << " seconds to build\n";
+		sstr << desc << "\n\n";
+		sstr << "Click = Build one\n";
+		sstr << "Ctrl+Click = Build multiple\n";
 
-		tooltip = sstr.str();
+		tooltip_ = sstr.str();
+		return tooltip_;
 	}
 
 	bool build() {
@@ -168,6 +177,9 @@ struct BuildInfo {
 
 	virtual void place(int x, int y, Game& game, Sfx& sfx) = 0;
 	virtual bool canPlace(int x, int y, Game& game) = 0;
+
+private:
+	std::string tooltip_;
 };
 
 struct FloorBuildInfo : public BuildInfo {
@@ -226,10 +238,10 @@ template<typename T> struct StructureBuildInfo : public BuildInfo {
 
 StructureBuildInfo<Wall> wallBuildInfo("Wall", "Protection against infantry", true, 100, 5, structures[STRUCTURE_WALL]);
 FloorBuildInfo floorBuildInfo("Floor", "To place buildings", true, 100, 5, tiles[4]);
-StructureBuildInfo<ComputeCore> computeBuildInfo("Compute Core", "Generates 1337 GFlops per second", false, 50000, 1000, structures[STRUCTURE_COMPUTE_CORE]);
-StructureBuildInfo<SiliconRefinery> siliconBuildInfo("Silicon Refinery", "Produces 30 Silicon per second", false, 30000, 500, structures[STRUCTURE_SILICON_REFINERY]);
-StructureBuildInfo<DroneDeployer> droneBuildInfo("Attack Drone Deployer", "Deploys attack drones", false, 100000, 5000, structures[STRUCTURE_DRONE_DEPLOYER]);
-StructureBuildInfo<DroneDeployer> repairDroneBuildInfo("Repair Drone Deployer", "Deploys repair drones", false, 200000, 5000, structures[STRUCTURE_REPAIR_DRONE_DEPLOYER], [](DroneDeployer* dd) {
+StructureBuildInfo<ComputeCore> computeBuildInfo("Compute Core", "Generates 1337 GFlops per second", true, 50000, 1000, structures[STRUCTURE_COMPUTE_CORE]);
+StructureBuildInfo<SiliconRefinery> siliconBuildInfo("Silicon Refinery", "Produces 30 Silicon per second", true, 30000, 500, structures[STRUCTURE_SILICON_REFINERY]);
+StructureBuildInfo<DroneDeployer> droneBuildInfo("Attack Drone Deployer", "Deploys attack drones", true, 100000, 5000, structures[STRUCTURE_DRONE_DEPLOYER]);
+StructureBuildInfo<DroneDeployer> repairDroneBuildInfo("Repair Drone Deployer", "Deploys repair drones", true, 200000, 5000, structures[STRUCTURE_REPAIR_DRONE_DEPLOYER], [](DroneDeployer* dd) {
 	dd->repair = true;
 	});
 
@@ -389,6 +401,7 @@ void Game::handleEvent(const SDL_Event& event) {
 		case SDLK_d: moveRight = true; return;
 		case SDLK_w: moveUp = true; return;
 		case SDLK_s: moveDown = true; return;
+		case SDLK_LCTRL:controlPressed = true; return;
 		case SDLK_r: {
 			spriteTexture->load(Image("media/textures/sprites.png"));
 			guiTexture->load(Image("media/textures/gui.png"));
@@ -404,6 +417,7 @@ void Game::handleEvent(const SDL_Event& event) {
 		case SDLK_d: moveRight = false; return;
 		case SDLK_w: moveUp = false; return;
 		case SDLK_s: moveDown = false; return;
+		case SDLK_LCTRL:controlPressed = false; return;
 		}
 		return;
 	}
@@ -758,16 +772,19 @@ void Game::doWave() {
 
 void Game::buildButton(BuildInfo& info, const Vec2& pos, const Vec2& size) {
 	Vec2 windowPos = Vec2(gfx.width() / gfx.getPixelScale() - 80, 0);
-	if (button(info.sprite, info.tooltip.c_str(), pos, size)) {
-		selectedBuildInfo = &info;
-
-		if (silicon >= info.siliconToBuild) {
-			if (info.build()) {
-				silicon -= info.siliconToBuild;
+	if (button(info.sprite, info.tooltip(computingPower).c_str(), pos, size)) {
+		if (info.readyCount <= 0 || controlPressed) {
+			if (silicon >= info.siliconToBuild) {
+				if (info.build()) {
+					silicon -= info.siliconToBuild;
+				}
+			}
+			else {
+				message("Not enough silicon");
 			}
 		}
-		else {
-			// Not enough silicon
+		else if (info.readyCount > 0) {
+			selectedBuildInfo = &info;
 		}
 	}
 	if (info.buildOpsRemaining > 0) {
