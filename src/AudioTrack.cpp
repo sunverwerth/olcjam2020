@@ -26,10 +26,21 @@ SOFTWARE.
 #include "AudioClip.h"
 #include <cstdlib>
 
-bool AudioTrack::isFree() const {
+bool AudioTrack::isFinished() const {
 	if (source == nullptr) return true;
 	if (!loop && nextSample >= source->numSamples()) return true;
 	return false;
+}
+
+bool AudioTrack::isFree() const {
+	return source == nullptr;
+}
+
+void AudioTrack::cleanUp() {
+	if (source) {
+		source->release();
+		source = nullptr;
+	}
 }
 
 void AudioTrack::render(float* buffer, int numSamples) {

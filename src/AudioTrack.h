@@ -37,7 +37,9 @@ public:
 		pitch(pitch),
 		loop(loop) {}
 
+	bool isFinished() const;
 	bool isFree() const;
+	void cleanUp();
 	void render(float* buffer, int numSamples);
 	void setVolume(float newVolume) { volume = newVolume; }
 	void setPan(float newPan) { pan = newPan; }

@@ -102,11 +102,8 @@ void SDLCALL Sfx::audioCallback(void* userdata, unsigned char* stream, int len) 
 	auto numSamples = len / (sizeof(float) * self->spec.channels);
 
 	for (auto track : self->audioTracks) {
-		if (track->isFree()) {
-			if (track->source) {
-				track->source->release();
-				track->source = nullptr;
-			}
+		if (track->isFinished()) {
+			track->cleanUp();
 			continue;
 		}
 
