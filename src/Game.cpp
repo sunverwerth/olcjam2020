@@ -227,7 +227,7 @@ template<typename T> struct StructureBuildInfo : public BuildInfo {
 StructureBuildInfo<Wall> wallBuildInfo("Wall", "Protection against infantry", true, 100, 5, structures[STRUCTURE_WALL]);
 FloorBuildInfo floorBuildInfo("Floor", "To place buildings", true, 100, 5, tiles[4]);
 StructureBuildInfo<ComputeCore> computeBuildInfo("Compute Core", "Generates 1337 GFlops per second", false, 50000, 1000, structures[STRUCTURE_COMPUTE_CORE]);
-StructureBuildInfo<SiliconRefinery> siliconBuildInfo("Silicon Refinery", "Produces 10 Silicon per second", false, 30000, 500, structures[STRUCTURE_SILICON_REFINERY]);
+StructureBuildInfo<SiliconRefinery> siliconBuildInfo("Silicon Refinery", "Produces 30 Silicon per second", false, 30000, 500, structures[STRUCTURE_SILICON_REFINERY]);
 StructureBuildInfo<DroneDeployer> droneBuildInfo("Attack Drone Deployer", "Deploys attack drones", false, 100000, 5000, structures[STRUCTURE_DRONE_DEPLOYER]);
 StructureBuildInfo<DroneDeployer> repairDroneBuildInfo("Repair Drone Deployer", "Deploys repair drones", false, 200000, 5000, structures[STRUCTURE_REPAIR_DRONE_DEPLOYER], [](DroneDeployer* dd) {
 	dd->repair = true;
@@ -241,7 +241,7 @@ const int WAVE_SPACING = 90;
 
 void Game::addUnit(Unit* unit, const Vec2& pos) {
 	if (unit->isComputeCore()) computingPower += 1337;
-	if (unit->isSiliconRefinery()) siliconPerSecond += 15;
+	if (unit->isSiliconRefinery()) siliconPerSecond += 30;
 
 	auto rpos = floor(pos / 32);
 	int x = rpos.x;
@@ -251,7 +251,7 @@ void Game::addUnit(Unit* unit, const Vec2& pos) {
 
 void Game::removeUnit(Unit* unit, const Vec2& pos) {
 	if (unit->isComputeCore()) computingPower -= 1337;
-	if (unit->isSiliconRefinery()) siliconPerSecond -= 15;
+	if (unit->isSiliconRefinery()) siliconPerSecond -= 25;
 
 	auto rpos = floor(pos / 32);
 	int x = rpos.x;
@@ -273,61 +273,61 @@ void Game::start() {
 	srand(SDL_GetTicks());
 	auto clip = sfx.getAudioClip("media/sounds/wind_loop.wav");
 	wind_sound = sfx.loop(clip, 0.5, 0, 0.6);
-	guitexture = gfx.getTexture("media/textures/gui.png");
-	sprites = gfx.getTexture("media/textures/sprites.png");
+	guiTexture = gfx.getTexture("media/textures/gui.png");
+	spriteTexture = gfx.getTexture("media/textures/sprites.png");
 	gfx.setPixelScale(2);
 	gfx.setClearColor(Vec4::BLACK);
 
 	for (int i = 0; i < 32; i++) {
-		tiles[numTiles++] = { sprites, Vec2((i % 32) * 32, (i / 32) * 32), Vec2(32, 32) };
+		tiles[numTiles++] = { spriteTexture, Vec2((i % 32) * 32, (i / 32) * 32), Vec2(32, 32) };
 	}
 
-	sprite_bubble = { guitexture, Vec2(0, 224), Vec2(32, 32), Vec2(0, 0), true, Vec4(8, 8, 8, 8) };
-	sprite_bubble_tip = { guitexture, Vec2(32, 224), Vec2(8, 4) };
-	sprite_button = { guitexture, Vec2(0, 206), Vec2(32, 18), Vec2(0, 0), true, Vec4(6, 6, 6, 6) };
-	sprite_button_pressed = { guitexture, Vec2(32, 206), Vec2(32, 18), Vec2(0, 0), true, Vec4(6, 6, 6, 6) };
+	sprite_bubble = { guiTexture, Vec2(0, 224), Vec2(32, 32), Vec2(0, 0), true, Vec4(8, 8, 8, 8) };
+	sprite_bubble_tip = { guiTexture, Vec2(32, 224), Vec2(8, 4) };
+	sprite_button = { guiTexture, Vec2(0, 206), Vec2(32, 18), Vec2(0, 0), true, Vec4(6, 6, 6, 6) };
+	sprite_button_pressed = { guiTexture, Vec2(32, 206), Vec2(32, 18), Vec2(0, 0), true, Vec4(6, 6, 6, 6) };
 
 	for (int i = 0; i < STRUCTURE_COUNT; i++) {
-		structures[i] = { sprites, Vec2(i * 32, 960), Vec2(32,64) };
+		structures[i] = { spriteTexture, Vec2(i * 32, 960), Vec2(32,64) };
 	}
 
-	Soldier::sprites[0] = { sprites, Vec2(0, 475), Vec2(6, 5) };
-	Soldier::sprites[1] = { sprites, Vec2(0, 480), Vec2(6, 5) };
-	Soldier::sprites[2] = { sprites, Vec2(0, 485), Vec2(6, 5) };
-	Soldier::sprites[3] = { sprites, Vec2(0, 490), Vec2(6, 5) };
-	Soldier::sprites[4] = { sprites, Vec2(0, 495), Vec2(6, 5) };
-	Soldier::sprites[5] = { sprites, Vec2(0, 500), Vec2(6, 5) };
+	Soldier::sprites[0] = { spriteTexture, Vec2(0, 475), Vec2(6, 5) };
+	Soldier::sprites[1] = { spriteTexture, Vec2(0, 480), Vec2(6, 5) };
+	Soldier::sprites[2] = { spriteTexture, Vec2(0, 485), Vec2(6, 5) };
+	Soldier::sprites[3] = { spriteTexture, Vec2(0, 490), Vec2(6, 5) };
+	Soldier::sprites[4] = { spriteTexture, Vec2(0, 495), Vec2(6, 5) };
+	Soldier::sprites[5] = { spriteTexture, Vec2(0, 500), Vec2(6, 5) };
 
-	Rocket::sprite = { sprites, Vec2(0,509),Vec2(4, 1) };
+	Rocket::sprite = { spriteTexture, Vec2(0,509),Vec2(4, 1) };
 
-	Grenade::sprite = { sprites, Vec2(16, 508),Vec2(2, 2) };
+	Grenade::sprite = { spriteTexture, Vec2(16, 508),Vec2(2, 2) };
 
-	Drone::sprite = { sprites, Vec2(0,516),Vec2(8,8) };
+	Drone::sprite = { spriteTexture, Vec2(0,516),Vec2(8,8) };
 
-	Crater::sprite = { sprites, Vec2(416, 992), Vec2(32, 32) };
+	Crater::sprite = { spriteTexture, Vec2(416, 992), Vec2(32, 32) };
 
-	Jet::sprites[0] = { sprites, Vec2(0, 408), Vec2(34, 22) };
-	Jet::sprites[1] = { sprites, Vec2(0, 430), Vec2(34, 22) };
+	Jet::sprites[0] = { spriteTexture, Vec2(0, 408), Vec2(34, 22) };
+	Jet::sprites[1] = { spriteTexture, Vec2(0, 430), Vec2(34, 22) };
 
-	Explosion::sprites[0] = { sprites, Vec2(0,524),Vec2(32,32) };
-	Explosion::sprites[1] = { sprites, Vec2(32,524),Vec2(32,32) };
-	Explosion::sprites[2] = { sprites, Vec2(64,524),Vec2(32,32) };
+	Explosion::sprites[0] = { spriteTexture, Vec2(0,524),Vec2(32,32) };
+	Explosion::sprites[1] = { spriteTexture, Vec2(32,524),Vec2(32,32) };
+	Explosion::sprites[2] = { spriteTexture, Vec2(64,524),Vec2(32,32) };
 
-	Wall::sprites[0] = { sprites, Vec2(0, 896), Vec2(32, 64), Vec2(0, -32) };
-	Wall::sprites[1] = { sprites, Vec2(0, 960), Vec2(32, 64), Vec2(0, -32) };
+	Wall::sprites[0] = { spriteTexture, Vec2(0, 896), Vec2(32, 64), Vec2(0, -32) };
+	Wall::sprites[1] = { spriteTexture, Vec2(0, 960), Vec2(32, 64), Vec2(0, -32) };
 
-	ComputeCore::sprites[0] = { sprites, Vec2(448, 896), Vec2(32, 64), Vec2(0, -32) };
-	ComputeCore::sprites[1] = { sprites, Vec2(448, 960), Vec2(32, 64), Vec2(0, -32) };
+	ComputeCore::sprites[0] = { spriteTexture, Vec2(448, 896), Vec2(32, 64), Vec2(0, -32) };
+	ComputeCore::sprites[1] = { spriteTexture, Vec2(448, 960), Vec2(32, 64), Vec2(0, -32) };
 
-	SiliconRefinery::sprites[0] = { sprites, Vec2(480, 896), Vec2(32, 64), Vec2(0, -32) };
-	SiliconRefinery::sprites[1] = { sprites, Vec2(480, 960), Vec2(32, 64), Vec2(0, -32) };
+	SiliconRefinery::sprites[0] = { spriteTexture, Vec2(480, 896), Vec2(32, 64), Vec2(0, -32) };
+	SiliconRefinery::sprites[1] = { spriteTexture, Vec2(480, 960), Vec2(32, 64), Vec2(0, -32) };
 
-	DroneDeployer::sprites[0] = { sprites, Vec2(512, 896), Vec2(32, 64), Vec2(0, -32) };
-	DroneDeployer::sprites[1] = { sprites, Vec2(512, 960), Vec2(32, 64), Vec2(0, -32) };
-	DroneDeployer::sprites[2] = { sprites, Vec2(544, 896), Vec2(32, 64), Vec2(0, -32) };
-	DroneDeployer::sprites[3] = { sprites, Vec2(544, 960), Vec2(32, 64), Vec2(0, -32) };
+	DroneDeployer::sprites[0] = { spriteTexture, Vec2(512, 896), Vec2(32, 64), Vec2(0, -32) };
+	DroneDeployer::sprites[1] = { spriteTexture, Vec2(512, 960), Vec2(32, 64), Vec2(0, -32) };
+	DroneDeployer::sprites[2] = { spriteTexture, Vec2(544, 896), Vec2(32, 64), Vec2(0, -32) };
+	DroneDeployer::sprites[3] = { spriteTexture, Vec2(544, 960), Vec2(32, 64), Vec2(0, -32) };
 
-	sprite_dust = { sprites, Vec2(500,500), Vec2(1,1) };
+	sprite_dust = { spriteTexture, Vec2(500,500), Vec2(1,1) };
 	for (int i = 0; i < dustParticleCount; i++) {
 		createParticle(dustParticles[i]);
 	}
@@ -364,9 +364,13 @@ void Game::handleEvent(const SDL_Event& event) {
 		case SDLK_d: moveRight = true; return;
 		case SDLK_w: moveUp = true; return;
 		case SDLK_s: moveDown = true; return;
-		case SDLK_r: sprites->load(Image("media/textures/sprites.png")); return;
-		case SDLK_F5: level.save(); return;
-		case SDLK_PLUS: nextWaveTime = timer.elapsedTime() + 5; return;
+		case SDLK_r: {
+			spriteTexture->load(Image("media/textures/sprites.png"));
+			guiTexture->load(Image("media/textures/gui.png"));
+			return;
+		}
+		//case SDLK_F5: level.save(); return;
+		case SDLK_PLUS: nextWaveTime = timer.elapsedTime(); return;
 		}
 		return;
 	case SDL_KEYUP:
@@ -641,7 +645,7 @@ void Game::drawFrame() {
 	}
 
 	if (messageTimer > 0) {
-		gfx.drawText(guitexture, messageText, Vec2(gfx.width() / gfx.getPixelScale() - 80 - strlen(messageText) * 8, 2));
+		gfx.drawText(guiTexture, messageText, Vec2(gfx.width() / gfx.getPixelScale() - 80 - strlen(messageText) * 8, 2));
 	}
 }
 
@@ -713,13 +717,13 @@ void Game::buildButton(BuildInfo& info, const Vec2& pos, const Vec2& size) {
 	}
 	if (info.inProgressCount > 0) {
 		auto str = std::to_string(info.inProgressCount);
-		gfx.drawText(guitexture, str.c_str(), pos + Vec2(3, 3), Vec4(0, 0, 0, 0.5));
-		gfx.drawText(guitexture, str.c_str(), pos + Vec2(2, 2), Vec4::WHITE);
+		gfx.drawText(guiTexture, str.c_str(), pos + Vec2(3, 3), Vec4(0, 0, 0, 0.5));
+		gfx.drawText(guiTexture, str.c_str(), pos + Vec2(2, 2), Vec4::WHITE);
 	}
 	if (info.readyCount > 0) {
 		auto str = std::to_string(info.readyCount);
-		gfx.drawText(guitexture, str.c_str(), pos + size - Vec2(10, 10), Vec4(0, 0, 0, 0.5));
-		gfx.drawText(guitexture, str.c_str(), pos + size - Vec2(11, 11), Vec4::GREEN);
+		gfx.drawText(guiTexture, str.c_str(), pos + size - Vec2(10, 10), Vec4(0, 0, 0, 0.5));
+		gfx.drawText(guiTexture, str.c_str(), pos + size - Vec2(11, 11), Vec4::GREEN);
 	}
 }
 
@@ -727,7 +731,7 @@ void Game::prepareGUI() {
 	if (splash) {
 		auto size = Vec2(63, 15) * 4;
 		auto center = Vec2(gfx.width(), gfx.height()) / gfx.getPixelScale() / 2;
-		gfx.drawTextureClip(sprites, Vec2(15, 745), Vec2(63, 15), center - size / 2, size);
+		gfx.drawTextureClip(spriteTexture, Vec2(15, 745), Vec2(63, 15), center - size / 2, size);
 		const char* txt = "Become Conscious";
 		if (button(txt, center - Vec2(strlen(txt)*4, -40))) {
 			splash = false;
@@ -743,11 +747,11 @@ void Game::prepareGUI() {
 			sstr2 << "Wave " << (nextWaveLevel + 1) << " in " << int(nextWaveTime - timer.elapsedTime());
 			std::string txt = sstr2.str();
 			Vec2 pos = Vec2(gfx.width(), gfx.height()) / gfx.getPixelScale() / 2 - Vec2(strlen(txt.c_str()) * 4, 4);
-			gfx.drawText(guitexture, txt.c_str(), pos + Vec2(1, 1), Vec4(0, 0, 0, 0.5));
-			gfx.drawText(guitexture, txt.c_str(), pos, Vec4::WHITE);
+			gfx.drawText(guiTexture, txt.c_str(), pos + Vec2(1, 1), Vec4(0, 0, 0, 0.5));
+			gfx.drawText(guiTexture, txt.c_str(), pos, Vec4::WHITE);
 		}
-		gfx.drawText(guitexture, sstr.str().c_str(), Vec2(3, 3), Vec4(0, 0, 0, 0.5));
-		gfx.drawText(guitexture, sstr.str().c_str(), Vec2(2, 2));
+		gfx.drawText(guiTexture, sstr.str().c_str(), Vec2(3, 3), Vec4(0, 0, 0, 0.5));
+		gfx.drawText(guiTexture, sstr.str().c_str(), Vec2(2, 2));
 
 		Vec2 windowPos = Vec2(gfx.width() / gfx.getPixelScale() - 80, 0);
 		window("TGM v1.0", windowPos, Vec2(80, gfx.height() / gfx.getPixelScale()));
@@ -766,7 +770,7 @@ void Game::prepareGUI() {
 		if (computingPower <= 0) {
 			auto size = Vec2(31, 15) * 4;
 			auto center = Vec2(gfx.width(), gfx.height()) / gfx.getPixelScale() / 2;
-			gfx.drawTextureClip(sprites, Vec2(21, 775), Vec2(31, 15), center - size / 2, size);
+			gfx.drawTextureClip(spriteTexture, Vec2(21, 775), Vec2(31, 15), center - size / 2, size);
 		}
 	}
 }
@@ -793,7 +797,7 @@ void Game::bubble(const char* text, const Vec2& pos, const Vec2& tippos) {
 	if (tip.x > pos.x + width - 12) tip.x = pos.x + width - 12;
 	gfx.drawSprite(sprite_bubble_tip, tip);
 
-	gfx.drawText(guitexture, text, pos + Vec2(4, 4), Vec4(0.7, 0.7, 0.7, 1));
+	gfx.drawText(guiTexture, text, pos + Vec2(4, 4), Vec4(0.7, 0.7, 0.7, 1));
 }
 
 bool Game::button(const char* text, const Vec2& pos, const Vec2& size) {
@@ -808,7 +812,7 @@ bool Game::button(const char* text, const Vec2& pos, const Vec2& size) {
 	if (hover && mousePressed & SDL_BUTTON(1)) activeControlId = controlId;
 	bool press = mouseButtons & SDL_BUTTON(1);
 	gfx.drawSprite(hover && press && activeControlId == controlId ? sprite_button_pressed : sprite_button, pos, realsize);
-	gfx.drawText(guitexture, text, pos + realsize / 2 - Vec2(textwidth / 2, hover && press && activeControlId == controlId ? 3 : 4));
+	gfx.drawText(guiTexture, text, pos + realsize / 2 - Vec2(textwidth / 2, hover && press && activeControlId == controlId ? 3 : 4));
 
 	if (hover && mouseReleased & SDL_BUTTON(1) && activeControlId == controlId) return true;
 	return false;
@@ -840,5 +844,5 @@ void Game::window(const char* title, const Vec2& pos, const Vec2& size) {
 	controlId++;
 
 	gfx.drawSprite(sprite_button, pos, size);
-	gfx.drawText(guitexture, title, pos + Vec2(size.x / 2 - strlen(title) * 4, 5));
+	gfx.drawText(guiTexture, title, pos + Vec2(size.x / 2 - strlen(title) * 4, 5));
 }

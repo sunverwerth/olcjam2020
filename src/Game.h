@@ -86,8 +86,8 @@ public:
 	Gfx& gfx;
 	Sfx& sfx;
 	Timer& timer;
-	Texture* guitexture{ nullptr };
-	Texture* sprites{ nullptr };
+	Texture* guiTexture{ nullptr };
+	Texture* spriteTexture{ nullptr };
 	unsigned int mouseButtons{ 0 };
 	unsigned int mousePressed{ 0 };
 	unsigned int mouseReleased{ 0 };
@@ -98,7 +98,7 @@ public:
 
 	// Game state
 	float computingPower{ 0 };
-	float silicon{ 5000 };
+	float silicon{ 4999 };
 	float siliconPerSecond{ 0 };
 
 	// Waves
