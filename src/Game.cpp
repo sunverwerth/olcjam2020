@@ -776,7 +776,7 @@ void Game::doWave() {
 void Game::buildButton(BuildInfo& info, const Vec2& pos, const Vec2& size) {
 	Vec2 windowPos = Vec2(gfx.width() / gfx.getPixelScale() - 80, 0);
 	if (button(info.sprite, info.tooltip(computingPower).c_str(), pos, size)) {
-		if (info.readyCount <= 0 || controlPressed) {
+		if ((info.readyCount <= 0 && info.inProgressCount <= 0) || controlPressed) {
 			if (silicon >= info.siliconToBuild) {
 				if (info.build()) {
 					silicon -= info.siliconToBuild;
