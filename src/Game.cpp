@@ -648,7 +648,13 @@ void Game::drawFrame() {
 
 	if (selectedBuildInfo && selectedBuildInfo->readyCount > 0) {
 		auto pos = Vec2(mouseX, mouseY) / gfx.getPixelScale();
-		gfx.drawSprite(selectedBuildInfo->sprite, pos - selectedBuildInfo->sprite.clipSize / 2);
+		int x = (mouseX / gfx.getPixelScale() + cameraPosition.x) / 32;
+		int y = (mouseY / gfx.getPixelScale() + cameraPosition.y) / 32;
+		Vec4 color = Vec4::WHITE;
+		if (!selectedBuildInfo->canPlace(x, y, *this)) {
+			color = Vec4::RED;
+		}
+		gfx.drawSprite(selectedBuildInfo->sprite, pos - selectedBuildInfo->sprite.clipSize / 2, color);
 	}
 
 	if (tooltip) {
