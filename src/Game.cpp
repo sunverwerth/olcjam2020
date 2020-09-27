@@ -698,7 +698,10 @@ void Game::drawFrame() {
 		int x = (mouseX / gfx.getPixelScale() + cameraPosition.x) / 32;
 		int y = (mouseY / gfx.getPixelScale() + cameraPosition.y) / 32;
 		Vec4 color = Vec4::WHITE;
-		if (!selectedBuildInfo->canPlace(x, y, *this)) {
+		if (mouseX > gfx.width() - 80 * gfx.getPixelScale()) {
+			color = Vec4(1, 1, 1, 0.5f);
+		}
+		else if (!selectedBuildInfo->canPlace(x, y, *this)) {
 			color = Vec4::RED;
 		}
 		gfx.drawSprite(selectedBuildInfo->sprite, pos - selectedBuildInfo->sprite.clipSize / 2, color);
