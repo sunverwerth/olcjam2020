@@ -44,6 +44,7 @@ class Game {
 public:
 	Game(Gfx& gfx, Sfx& sfx, Timer& timer) : gfx(gfx), sfx(sfx), timer(timer) {}
 	void start();
+	void restart();
 	void handleEvent(const SDL_Event&);
 	bool shouldKeepRunning() const { return keepRunning; }
 	void update();

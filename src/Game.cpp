@@ -331,6 +331,32 @@ void Game::start() {
 		createParticle(dustParticles[i]);
 	}
 
+	restart();
+}
+
+void Game::restart() {
+	// Game
+	computingPower = 0;
+	silicon = 4999;
+	siliconPerSecond = 0;
+
+	// Waves
+	nextWaveLevel = 0;
+	nextWaveTime = 0;
+	waveEnd = 0;
+
+	selectedBuildInfo = nullptr;
+
+	cameraPosition = { 500,500 };
+
+	splash = 1;
+	gameOver = 0;
+
+	for (auto& unit : units) {
+		delete unit;
+	}
+	units.clear();
+
 	level.load();
 
 	for (int y = 0; y < level.height(); y++) {
@@ -474,6 +500,9 @@ void Game::update() {
 	if (dt > 0.1f) dt = 0.1f;
 
 	messageTimer -= dt;
+	if (splash == 1) {
+		nextWaveTime = timer.elapsedTime() + WAVE_SPACING;
+	}
 	if (splash < 1) {
 		splash -= dt;
 	}
@@ -516,11 +545,15 @@ void Game::update() {
 	silicon += siliconPerSecond * dt;
 
 	if (timer.elapsedTime() >= nextWaveTime) {
-		startWave();
+		if (!gameOver) {
+			startWave();
+		}
 	}
 
 	if (timer.elapsedTime() < waveEnd) {
-		doWave();
+		if (!gameOver) {
+			doWave();
+		}
 	}
 
 	// place objects
@@ -799,6 +832,10 @@ void Game::prepareGUI() {
 			auto size = Vec2(31, 15) * 4;
 			auto center = Vec2(gfx.width(), gfx.height()) / gfx.getPixelScale() / 2;
 			gfx.drawTextureClip(spriteTexture, Vec2(21, 775), Vec2(31, 15), center - size / 2, size);
+			const char* txt = "Try again";
+			if (button(txt, center - Vec2(strlen(txt) * 4, -40))) {
+				restart();
+			}
 		}
 	}
 }

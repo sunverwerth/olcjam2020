@@ -89,8 +89,11 @@ void Level::load() {
 		log_error("Could not open level file for reading.");
 		return;
 	}
-	file.read(reinterpret_cast<char*>(tiles), sizeof(int) * width_ * height_);
-	file.read(reinterpret_cast<char*>(structures), sizeof(int) * width_ * height_);
+	file.read(reinterpret_cast<char*>(tiles), sizeof(int) * (size_t)width_ * (size_t)height_);
+	file.read(reinterpret_cast<char*>(structures), sizeof(int) * (size_t)width_ * (size_t)height_);
+	for (int i = 0; i < width_ * height_; i++) {
+		unitsOnTile[i].clear();
+	}
 }
 
 void Level::save() const {
