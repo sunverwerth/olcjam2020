@@ -791,15 +791,15 @@ void Game::buildButton(BuildInfo& info, const Vec2& pos, const Vec2& size) {
 	if (info.buildOpsRemaining > 0) {
 		gfx.drawRadialProgressIndicator(pos, size, info.buildOpsRemaining / info.opsToBuild, Vec4(0, 1, 0, 0.25));
 	}
-	if (info.inProgressCount > 0) {
+	if (info.inProgressCount > 1) {
 		auto str = std::to_string(info.inProgressCount);
 		gfx.drawText(guiTexture, str.c_str(), pos + Vec2(3, 3), Vec4(0, 0, 0, 0.5));
 		gfx.drawText(guiTexture, str.c_str(), pos + Vec2(2, 2), Vec4::WHITE);
 	}
 	if (info.readyCount > 0) {
 		auto str = std::to_string(info.readyCount);
-		gfx.drawText(guiTexture, str.c_str(), pos + size - Vec2(10, 10), Vec4(0, 0, 0, 0.5));
-		gfx.drawText(guiTexture, str.c_str(), pos + size - Vec2(11, 11), Vec4::GREEN);
+		gfx.drawText(guiTexture, str.c_str(), pos + Vec2(3, size.y - 11), Vec4(0, 0, 0, 0.5));
+		gfx.drawText(guiTexture, str.c_str(), pos + Vec2(2, size.y - 10), Vec4::GREEN);
 	}
 }
 
