@@ -30,10 +30,24 @@ SOFTWARE.
 Mesh::Mesh() {
 	int numQuads = 65536 / 4;
 
-	glCreateBuffers(1, &vbo);
-	glNamedBufferStorage(vbo, sizeof(SpriteVertex) * numQuads * 4, nullptr, GL_DYNAMIC_STORAGE_BIT);
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
 
-	glCreateBuffers(1, &ebo);
+	glGenBuffers(1, &vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(SpriteVertex) * numQuads * 4, nullptr, GL_DYNAMIC_DRAW);
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(SpriteVertex), (void*)offsetof(SpriteVertex, position));
+
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(SpriteVertex), (void*)offsetof(SpriteVertex, uv));
+
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(SpriteVertex), (void*)offsetof(SpriteVertex, color));
+
+	glGenBuffers(1, &ebo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 	int numIndices = numQuads * 6;
 	std::vector<unsigned short> indices(numIndices);
 	for (int i = 0; i < numQuads; i++) {
@@ -44,23 +58,7 @@ Mesh::Mesh() {
 		indices[i * 6 + 4] = i * 4 + 3;
 		indices[i * 6 + 5] = i * 4 + 0;
 	}
-	glNamedBufferStorage(ebo, sizeof(unsigned short) * numIndices, indices.data(), 0);
-
-	glCreateVertexArrays(1, &vao);
-	glVertexArrayVertexBuffer(vao, 0, vbo, 0, sizeof(SpriteVertex));
-	glVertexArrayElementBuffer(vao, ebo);
-
-	glEnableVertexArrayAttrib(vao, 0);
-	glVertexArrayAttribBinding(vao, 0, 0);
-	glVertexArrayAttribFormat(vao, 0, 2, GL_FLOAT, GL_FALSE, offsetof(SpriteVertex, position));
-
-	glEnableVertexArrayAttrib(vao, 1);
-	glVertexArrayAttribBinding(vao, 1, 0);
-	glVertexArrayAttribFormat(vao, 1, 2, GL_FLOAT, GL_FALSE, offsetof(SpriteVertex, uv));
-
-	glEnableVertexArrayAttrib(vao, 2);
-	glVertexArrayAttribBinding(vao, 2, 0);
-	glVertexArrayAttribFormat(vao, 2, 4, GL_FLOAT, GL_FALSE, offsetof(SpriteVertex, color));
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short) * numIndices, indices.data(), GL_DYNAMIC_DRAW);
 }
 
 Mesh::~Mesh() {
@@ -70,10 +68,12 @@ Mesh::~Mesh() {
 }
 
 void Mesh::bind() const {
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 	glBindVertexArray(vao);
 }
 
 void Mesh::setVertices(const void* data, size_t elementSize, int num) {
-	glNamedBufferSubData(vbo, 0, elementSize * num, data);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, elementSize * num, data);
 	numVertices_ = num;
 }

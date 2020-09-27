@@ -28,10 +28,11 @@ SOFTWARE.
 #include "sys.h"
 
 Texture::Texture(const Image& image): width_(image.width()), height_(image.height()) {
-	glCreateTextures(GL_TEXTURE_2D, 1, &texture);
-	glTextureStorage2D(texture, 1, GL_RGBA8, width_, height_);
-	glTextureParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTextureParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, image.format() == Image::Format::RGB8 ? GL_RGB8 : GL_RGBA8, width_, height_, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	load(image);
 }
 
@@ -45,17 +46,20 @@ void Texture::load(const Image& image) {
 		return;
 	}
 
-	glTextureSubImage2D(texture, 0, 0, 0, width_, height_, image.format() == Image::Format::RGB8 ? GL_RGB : GL_RGBA, GL_UNSIGNED_BYTE, image.data());
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width_, height_, image.format() == Image::Format::RGB8 ? GL_RGB : GL_RGBA, GL_UNSIGNED_BYTE, image.data());
 }
 
 void Texture::bind(int unit) {
 	if (unit_ >= 0) unbind();
 	unit_ = unit;
-	glBindTextureUnit(unit_, texture);
+	glActiveTexture(GL_TEXTURE0 + unit_);
+	glBindTexture(GL_TEXTURE_2D, texture);
 }
 
 void Texture::unbind() {
 	if (unit_ < 0) return;
-	glBindTextureUnit(unit_, 0);
+	glActiveTexture(GL_TEXTURE0 + unit_);
+	glBindTexture(GL_TEXTURE_2D, 0);
 	unit_ = -1;
 }

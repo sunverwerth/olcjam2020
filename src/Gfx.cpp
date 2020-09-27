@@ -46,7 +46,7 @@ Gfx::Gfx(const char* title, int width, int height, bool fullscreen) {
 	SDL_GetWindowSize(window, &width_, &height_);
 
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 	SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, SDL_TRUE);
 	unsigned int flags = SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
@@ -66,6 +66,7 @@ Gfx::Gfx(const char* title, int width, int height, bool fullscreen) {
 #ifdef _DEBUG
 	if (glDebugMessageCallback) {
 		glEnable(GL_DEBUG_OUTPUT);
+		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 		glDebugMessageCallback(debugCallback, nullptr);
 	}
 #endif
