@@ -251,7 +251,7 @@ void Game::addUnit(Unit* unit, const Vec2& pos) {
 
 void Game::removeUnit(Unit* unit, const Vec2& pos) {
 	if (unit->isComputeCore()) computingPower -= 1337;
-	if (unit->isSiliconRefinery()) siliconPerSecond -= 25;
+	if (unit->isSiliconRefinery()) siliconPerSecond -= 30;
 
 	auto rpos = floor(pos / 32);
 	int x = rpos.x;
