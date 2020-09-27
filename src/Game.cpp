@@ -786,9 +786,7 @@ void Game::buildButton(BuildInfo& info, const Vec2& pos, const Vec2& size) {
 				message("Not enough silicon");
 			}
 		}
-		else if (info.readyCount > 0) {
-			selectedBuildInfo = &info;
-		}
+		selectedBuildInfo = &info;
 	}
 	if (info.buildOpsRemaining > 0) {
 		gfx.drawRadialProgressIndicator(pos, size, info.buildOpsRemaining / info.opsToBuild, Vec4(0, 1, 0, 0.25));
