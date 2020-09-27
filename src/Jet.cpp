@@ -35,7 +35,7 @@ Sprite Jet::sprites[2];
 
 void Jet::update(float dt, Game& game, Sfx& sfx) {
 	if (time == 0) {
-		sfx.play(sfx.getAudioClip("media/sounds/jet.wav"), 1, 0, frand(0.9, 1.1));
+		sfx.play(sfx.getAudioClip("media/sounds/jet.wav", 1), 1, 0, frand(0.9, 1.1));
 	}
 
 	speed += dt * 100;

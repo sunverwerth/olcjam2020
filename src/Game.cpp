@@ -271,8 +271,7 @@ bool moveUp, moveDown, moveLeft, moveRight;
 
 void Game::start() {
 	srand(SDL_GetTicks());
-	auto clip = sfx.getAudioClip("media/sounds/wind_loop.wav");
-	wind_sound = sfx.loop(clip, 0.5, 0, 0.6);
+	wind_sound = sfx.loop(sfx.getAudioClip("media/sounds/wind_loop.wav"), 0.5, 0, 0.6);
 	guiTexture = gfx.getTexture("media/textures/gui.png");
 	spriteTexture = gfx.getTexture("media/textures/sprites.png");
 	gfx.setPixelScale(2);
@@ -486,6 +485,7 @@ void Game::update() {
 		gameOver = 0.01f;
 	}
 	if (gameOver > 0) {
+		selectedBuildInfo = nullptr;
 		gameOver += dt;
 	}
 	if (gameOver > 1) {
@@ -602,11 +602,6 @@ void Game::drawFrame() {
 		}
 	}
 
-	if (selectedBuildInfo && selectedBuildInfo->readyCount > 0) {
-		auto pos = Vec2(mouseX, mouseY) / gfx.getPixelScale();
-		gfx.drawSprite(selectedBuildInfo->sprite, pos - selectedBuildInfo->sprite.clipSize / 2);
-	}
-
 	// Render normal structures and units
 	for (int y = miny; y < maxy; y++) {
 		for (int x = minx; x < maxx; x++) {
@@ -649,6 +644,11 @@ void Game::drawFrame() {
 
 	if (!(mouseButtons & SDL_BUTTON(1))) {
 		activeControlId = 0;
+	}
+
+	if (selectedBuildInfo && selectedBuildInfo->readyCount > 0) {
+		auto pos = Vec2(mouseX, mouseY) / gfx.getPixelScale();
+		gfx.drawSprite(selectedBuildInfo->sprite, pos - selectedBuildInfo->sprite.clipSize / 2);
 	}
 
 	if (tooltip) {
