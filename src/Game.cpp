@@ -147,13 +147,13 @@ struct BuildInfo {
 		opsToBuild(opsToBuild),
 		siliconToBuild(siliconToBuild),
 		sprite(sprite)
-	{		
+	{
 		std::stringstream sstr;
 		sstr << name << "\n";
 		sstr << siliconToBuild << " Si\n";
 		sstr << opsToBuild << " GFlops\n";
 		sstr << desc;
-		
+
 		tooltip = sstr.str();
 	}
 
@@ -231,7 +231,7 @@ StructureBuildInfo<SiliconRefinery> siliconBuildInfo("Silicon Refinery", "Produc
 StructureBuildInfo<DroneDeployer> droneBuildInfo("Attack Drone Deployer", "Deploys attack drones", false, 100000, 5000, structures[STRUCTURE_DRONE_DEPLOYER]);
 StructureBuildInfo<DroneDeployer> repairDroneBuildInfo("Repair Drone Deployer", "Deploys repair drones", false, 200000, 5000, structures[STRUCTURE_REPAIR_DRONE_DEPLOYER], [](DroneDeployer* dd) {
 	dd->repair = true;
-});
+	});
 
 BuildInfo* buildInfos[]{ &wallBuildInfo, &floorBuildInfo, &computeBuildInfo, &siliconBuildInfo, &droneBuildInfo, &repairDroneBuildInfo };
 
@@ -369,7 +369,7 @@ void Game::handleEvent(const SDL_Event& event) {
 			guiTexture->load(Image("media/textures/gui.png"));
 			return;
 		}
-		//case SDLK_F5: level.save(); return;
+				   //case SDLK_F5: level.save(); return;
 		case SDLK_PLUS: nextWaveTime = timer.elapsedTime(); return;
 		}
 		return;
@@ -480,6 +480,16 @@ void Game::update() {
 	}
 	if (splash < 0) {
 		splash = 0;
+	}
+
+	if (computingPower <= 0 && gameOver == 0) {
+		gameOver = 0.01f;
+	}
+	if (gameOver > 0) {
+		gameOver += dt;
+	}
+	if (gameOver > 1) {
+		gameOver = 1;
 	}
 
 	// distribute gflops
@@ -742,13 +752,13 @@ void Game::prepareGUI() {
 		auto center = Vec2(gfx.width(), gfx.height()) / gfx.getPixelScale() / 2;
 		gfx.drawTextureClip(spriteTexture, Vec2(15, 745), Vec2(63, 15), center - size / 2, size);
 		const char* txt = "Become Conscious";
-		if (button(txt, center - Vec2(strlen(txt)*4, -40))) {
+		if (button(txt, center - Vec2(strlen(txt) * 4, -40))) {
 			splash = 0.999f;
 		}
 	}
 	else {
 		// Render Hud
-		float offset = easein(splash)*-12;
+		float offset = easein(splash + gameOver) * -12;
 		gfx.drawSprite(sprite_bubble, Vec2(0, offset), Vec2(gfx.width() / gfx.getPixelScale() - 80, 12), Vec4(0, 0, 0, 1));
 		std::stringstream sstr;
 		sstr << (int)silicon << " Silicon | " << (int)computingPower << " GFlops";
@@ -764,7 +774,7 @@ void Game::prepareGUI() {
 			gfx.drawText(guiTexture, txt.c_str(), pos, Vec4::WHITE);
 		}
 
-		offset = easein(splash) * 80;
+		offset = easein(splash + gameOver) * 80;
 		Vec2 windowPos = Vec2(gfx.width() / gfx.getPixelScale() - 80 + offset, 0);
 		window("TGM v1.0", windowPos, Vec2(80, gfx.height() / gfx.getPixelScale()));
 
@@ -779,7 +789,7 @@ void Game::prepareGUI() {
 			keepRunning = false;
 		}
 
-		if (computingPower <= 0) {
+		if (gameOver > 0) {
 			auto size = Vec2(31, 15) * 4;
 			auto center = Vec2(gfx.width(), gfx.height()) / gfx.getPixelScale() / 2;
 			gfx.drawTextureClip(spriteTexture, Vec2(21, 775), Vec2(31, 15), center - size / 2, size);

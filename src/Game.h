@@ -111,4 +111,5 @@ public:
 	BuildInfo* selectedBuildInfo{ nullptr };
 
 	float splash{ 1 };
+	float gameOver{ 0 };
 };
